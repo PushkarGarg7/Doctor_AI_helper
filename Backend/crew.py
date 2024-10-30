@@ -14,16 +14,20 @@ crew = Crew(
   share_crew=True
 )
 
-# Define the top 3 diseases
+# Define the top 3 diseases, and add age and gender
 top_diseases = [
     "Atelectasis",
     "Consolidation",
     "Pneumonia"
 ]
+age = 45  # Example age
+gender = "male"  # Example gender
 
-# Start the task execution process with the defined top 3 diseases
+# Start the task execution process with the defined top 3 diseases, age, and gender
 result = crew.kickoff(inputs={
-    'diseases': ", ".join(top_diseases)  # Join the top diseases into a single string
+    'diseases': ", ".join(top_diseases),  # Join the top diseases into a single string
+    'age': age,
+    'gender': gender
 })
 
 print(result)
