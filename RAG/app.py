@@ -17,6 +17,7 @@ diseases = [
     "Fibrosis", "Effusion", "Pneumonia", "Pleural_thickening", "Cardiomegaly", "Nodule Mass", "Hernia"
 ]
 
+
 # Questions associated with each disease
 disease_questions = {
     "Atelectasis": [
@@ -29,21 +30,93 @@ disease_questions = {
         "Are you experiencing unexplained weight loss or night sweats?",
         "Have you had a fever, and how high has it been?"
     ],
+    "Infiltration": [
+        "Do you feel a tightness in your chest or discomfort when breathing deeply?",
+        "Are you coughing up yellow or green mucus?",
+        "Have you noticed any recent fatigue or low energy levels?"
+    ],
+    "Pneumothorax": [
+        "Do you have sudden, sharp chest pain on one side of your chest?",
+        "Are you experiencing shortness of breath that worsens with activity?",
+        "Have you recently had a chest injury or trauma?"
+    ],
+    "Edema": [
+        "Are you experiencing swelling in your legs, ankles, or feet?",
+        "Do you have difficulty breathing when lying down or at night?",
+        "Have you noticed sudden weight gain or bloating?"
+    ],
+    "Emphysema": [
+        "Do you have a chronic cough that produces mucus, particularly in the morning?",
+        "Are you experiencing a wheezing or whistling sound when breathing?",
+        "Have you noticed shortness of breath, especially during physical activities?"
+    ],
+    "Fibrosis": [
+        "Are you experiencing a persistent dry cough?",
+        "Do you feel short of breath even when at rest?",
+        "Have you noticed fatigue or muscle and joint aches?"
+    ],
+    "Effusion": [
+        "Do you have chest pain that worsens with deep breaths or coughs?",
+        "Are you experiencing difficulty breathing while lying down?",
+        "Have you had a recent infection or surgery in your chest area?"
+    ],
     "Pneumonia": [
         "Do you have a high fever, and if so, how high has it been?",
         "Have you experienced confusion or changes in mental awareness?",
         "Is your cough dry or are you coughing up phlegm? What color is the phlegm?"
     ],
-    # Add similar question lists for other diseases if needed
+    "Pleural_thickening": [
+        "Do you have a persistent dry cough that doesn’t improve?",
+        "Are you experiencing any chest pain or discomfort?",
+        "Have you had exposure to asbestos or other chemicals in the past?"
+    ],
+    "Cardiomegaly": [
+        "Do you experience swelling in your legs or abdomen?",
+        "Are you frequently short of breath, especially during physical activities?",
+        "Have you noticed an irregular heartbeat or palpitations?"
+    ],
+    "Nodule Mass": [
+        "Do you have unexplained chest pain or discomfort?",
+        "Have you noticed any hoarseness or changes in your voice?",
+        "Do you feel short of breath with minimal activity?"
+    ],
+    "Hernia": [
+        "Do you have a bulge or lump in your abdomen or groin area?",
+        "Are you experiencing discomfort when bending over or lifting?",
+        "Have you noticed pain in your chest after heavy meals?"
+    ]
 }
 
 def generate_disease_probabilities():
-    # Generate random probabilities for all 13 diseases and normalize to sum to 1
-    probabilities = np.random.rand(len(diseases))
-    probabilities /= probabilities.sum()
-    
-    # Create a dictionary of diseases and their probabilities
+
+    # Step 1: Randomly select three diseases for higher probabilities
+    selected_indices = np.random.choice(len(diseases), 3, replace=False)
+    selected_probabilities = np.random.uniform(0.2, 0.4, 3)
+    selected_probabilities /= selected_probabilities.sum()  # Normalize to sum to 1 within selected range
+    selected_probabilities *= 0.8  # Scale to make the sum of these three around 0.8
+
+    # Step 2: Assign these high probabilities to the selected diseases
+    probabilities = np.zeros(len(diseases))
+    for i, idx in enumerate(selected_indices):
+        probabilities[idx] = selected_probabilities[i]
+
+    # Step 3: Calculate remaining probability for other diseases
+    remaining_prob = 1 - probabilities[selected_indices].sum()
+    remaining_indices = [i for i in range(len(diseases)) if i not in selected_indices]
+
+    # Step 4: Distribute remaining probability across other diseases with low but non-zero values
+    remaining_probabilities = np.random.uniform(0.01, 0.05, len(remaining_indices))
+    remaining_probabilities /= remaining_probabilities.sum()  # Normalize to sum to 1
+    remaining_probabilities *= remaining_prob  # Scale to the remaining probability
+
+    # Step 5: Assign these lower probabilities to the remaining diseases
+    for i, idx in enumerate(remaining_indices):
+        probabilities[idx] = remaining_probabilities[i]
+
+    # Step 6: Trim probabilities to 3 decimal places and create dictionary
+    probabilities = np.round(probabilities, 3)
     disease_probabilities = dict(zip(diseases, probabilities))
+
     
     # Get the top 3 diseases with the highest probabilities
     top_3_diseases = sorted(disease_probabilities, key=disease_probabilities.get, reverse=True)[:3]
@@ -83,13 +156,9 @@ def upload_image():
 
     # Validate file type and save if valid
     if file and allowed_file(file.filename):
-        # filename = secure_filename(file.filename)
-        # file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        # file.save(file_path)
 
         # Generate disease probabilities and get questions for top 3 diseases
         probabilities_data = generate_disease_probabilities()
-        # print(probabilities_data)
         response = {
             "disease_data": probabilities_data,
         }

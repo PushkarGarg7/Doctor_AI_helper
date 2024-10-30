@@ -21,7 +21,7 @@ const UploadHelper = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
-  const [diseaseQuestions, setDiseaseQuestions] = useState([]); // Store questions from server response
+  const [diseaseQuestions, setDiseaseQuestions] = useState({}); // Store questions from server response
   const [responses, setResponses] = useState({}); // Store user responses to questions
   const [mappedData, setMappedData] = useState([]);
 
@@ -51,12 +51,11 @@ const UploadHelper = () => {
       });
       console.log(response);
       if(response.status === 201){
-        setDynamicNumbers(response.data.disease_data.disease_probabilities); // Update dynamic numbers from server response
-        const questions = Array.isArray(response.data.disease_data.questions)
-        ? response.data.disease_data.questions
-        : [];
-        setDiseaseQuestions(questions); // Set disease questions from server response
         message.success('File uploaded successfully!');
+        setTimeout(() => {
+          setDynamicNumbers(response.data.disease_data.disease_probabilities); // Update dynamic numbers from server response
+          setDiseaseQuestions(response.data.disease_data.questions);
+        }, 2000);
       }
     } catch (error) {
       message.error('Failed to upload file.');
@@ -68,7 +67,7 @@ const UploadHelper = () => {
   // Function to handle submission of disease responses
   const handleSubmitResponses = async () => {
     try {
-      const response = await axios.post('YOUR_RESPONSE_API_ENDPOINT', { responses });
+      const response = await axios.post('http://localhost:5000/responses', { responses });
       message.success('Responses submitted successfully!');
     } catch (error) {
       message.error('Failed to submit responses.');
@@ -253,31 +252,41 @@ const UploadHelper = () => {
             borderRadius: '8px',
           }}
         >
-          <h1>Disease Questions</h1>
-          <Row gutter={[16, 16]}>
-            {Array.isArray(diseaseQuestions) && 
-              diseaseQuestions.slice(0, 3).map((question, index) => (
-                <Col xs={24} sm={12} lg={8} key={index}>
-                  <div>
-                    <Text>{question}</Text>
-                    <TextArea
-                      placeholder="Type your response here"
-                      onChange={(e) => handleResponseChange(index, e.target.value)}
-                      value={responses[index] || ''}
-                      rows={3}
-                      style={{ marginTop: 8 }}
-                    />
-                  </div>
-                </Col>
-            ))}
-          </Row>
-          <Button
-            type="primary"
-            onClick={handleSubmitResponses}
-            style={{ marginTop: '16px' }}
-          >
-            Submit Responses
-          </Button>
+        <h1>Disease Questions</h1>
+        <Row gutter={[16, 16]}>
+          {Object.entries(diseaseQuestions).map(([disease, questions]) => (
+            <Col xs={24} key={disease}>
+              <h2 style={{ marginBottom: '8px', fontSize: '20px', color: '#333' }}>{disease}</h2> {/* Disease heading */}
+              {/* Map through questions and display each on a new line */}
+              {questions.map((question, index) => (
+                <Text key={index} style={{ display: 'block', marginBottom: '4px' }}>
+                  {question}
+                </Text>
+              ))}
+              <TextArea
+                placeholder="Type your response here"
+                onChange={(e) => handleResponseChange(disease, e.target.value)} // Use disease name for response key
+                value={responses[disease] || ''}
+                rows={4}
+                style={{
+                  width: '80%',  // Decrease horizontal size of the textbox
+                  marginTop: 8,
+                  borderRadius: '4px',
+                  border: '1px solid #d9d9d9',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                  transition: 'border-color 0.2s',
+                }}
+              />
+            </Col>
+          ))}
+        </Row>  
+        <Button
+          type="primary"
+          onClick={handleSubmitResponses}
+          style={{ marginTop: '16px' }}
+        >
+          Submit Responses
+        </Button>
         </Content>
       </Layout>
     </Layout>

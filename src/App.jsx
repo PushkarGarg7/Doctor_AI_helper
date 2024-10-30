@@ -8,8 +8,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>  
-        <Route path='/' element = {<LandingPage/>}/>
-        <Route path='/upload' element = {<UploadHelper/>}/>
+        <Route path='/' element = {<UploadHelper/>}/>
+        {/* <Route path='/upload' element = {<UploadHelper/>}/> */}
       </Routes>
     </BrowserRouter>
   )
