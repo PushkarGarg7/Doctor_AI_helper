@@ -1,0 +1,74 @@
+/* App.css */
+
+/* General Layout */
+.ant-layout {
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Sidebar */
+  .ant-layout-sider {
+    background-color: #f9fafb;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+  }
+  
+  .ant-layout-sider h3 {
+    color: #1890ff;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  
+  /* Sidebar Form styling */
+  .ant-form-item-label > label {
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .ant-input-number, .ant-select-selector, .ant-upload button {
+    width: 100%;
+    border-radius: 4px;
+  }
+  
+  /* List styling in Sidebar */
+  .ant-list-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .ant-list-item:last-child {
+    border-bottom: none;
+  }
+  
+  .ant-list-item .ant-typography {
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .ant-list-item .ant-typography:nth-child(2) {
+    font-weight: bold;
+    color: #0070f3;
+  }
+  
+  /* Content Area styling */
+  .ant-layout-content {
+    margin: 24px 16px 0;
+    padding: 24px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .ant-layout-content h1 {
+    font-size: 1.8em;
+    color: #333;
+    margin-bottom: 16px;
+  }
+  
+  .ant-layout-content p {
+    color: #595959;
+    font-size: 1.1em;
+  }
+  
