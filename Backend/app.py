@@ -3,9 +3,16 @@ from werkzeug.utils import secure_filename
 import os
 import numpy as np
 from flask_cors import CORS
+from dotenv import load_dotenv
+from pymongo.server_api import ServerApi
+from pymongo import MongoClient
+import bcrypt
 
 app = Flask(__name__)
+load_dotenv()
 CORS(app)  # Enable CORS for the Flask app
+mongo_uri = os.getenv('MONGO_URI')
+client = MongoClient(mongo_uri, server_api=ServerApi('1'))
 
 @app.route('/')
 def home():
@@ -16,6 +23,8 @@ diseases = [
     "Atelectasis", "Consolidation", "Infiltration", "Pneumothorax", "Edema", "Emphysema",
     "Fibrosis", "Effusion", "Pneumonia", "Pleural_thickening", "Cardiomegaly", "Nodule Mass", "Hernia"
 ]
+
+users_collection = client.myapp.users
 
 
 # Questions associated with each disease
@@ -166,6 +175,60 @@ def upload_image():
         return jsonify(response), 201
     else:
         return jsonify({"error": "File type not allowed"}), 400
+    
+    
+
+# User login
+@app.route("/login", methods=['POST'])
+def loginUser():
+    data = request.json
+    required_fields = ['email', 'password']
+    
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"msg": f"'{field}' is required"}), 400
+
+    # Find the user by email
+    user = users_collection.find_one({'email': data['email']})
+    
+    if user and bcrypt.checkpw(data['password'].encode('utf-8'), user['password'].encode('utf-8')):
+        return jsonify({
+            "msg": "Login successful",
+            "user": {
+                "name": user['name'],
+                "email": user['email'],
+            }
+        }), 200
+
+    return jsonify({"msg": "Invalid email or password"}), 401
+    
+    
+@app.route("/register", methods=['POST'])
+def createUser():
+    data = request.json
+    
+    # Check if all required fields are present
+    required_fields = ['name', 'email', 'password']
+    for field in required_fields:
+        if not data.get(field):  # Check if field is missing or empty
+            return jsonify({"msg": f"'{field}' is required"}), 400
+    
+    # Check if the user already exists by email
+    if users_collection.find_one({'email': data['email']}):
+        return jsonify({"msg": "User already exists"}), 400
+    
+    # Hash the password
+    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
+    
+    # Insert new user into the database
+    users_collection.insert_one({
+        'name': data['name'],
+        'email': data['email'],
+        'password': hashed_password.decode('utf-8'),
+    })
+    
+    return jsonify({"msg": "User created successfully"}), 201
+
 
 if __name__ == '__main__':
     app.run(debug=True)

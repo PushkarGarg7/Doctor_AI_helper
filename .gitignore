@@ -23,5 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 venv
+myenv
 .env
 __pycache__
