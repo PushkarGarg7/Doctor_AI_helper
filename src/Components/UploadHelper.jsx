@@ -244,46 +244,6 @@ const UploadHelper = () => {
       </Sider>
 
       <Layout>
-        <div className="profile-menu-container" style={{ textAlign: 'right', margin: 0 }}>
-            <IconButton onClick={handleMenuClick} style={{ float: 'right', background: 'transparent' }}>
-              <Avatar alt="Profile" />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              slotProps={{
-                style: {
-                  backgroundColor: 'white', // Ensure no black background
-                }
-              }}
-            >
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/profile"); }}>Profile</MenuItem>
-              <MenuItem onClick={() => { handleMenuClose(); navigate("/"); }}>Home</MenuItem>
-              {/* <MenuItem onClick={() => { handleMenuClose(); navigate("/logout"); }}>Logout</MenuItem> */}
-              <Popconfirm
-                  placement="bottom"
-                  title="LogOut Confirm"
-                  content={"Are You Sure You Want to LogOut"}  // Updated prop
-                  open={openLogOut}
-                  onConfirm={handleOk}
-                  okButtonProps={{
-                    loading: confirmLoading,
-                  }}
-                  onCancel={handleCancel}
-              >
-                <MenuItem onClick={showPopconfirm}>Logout</MenuItem>
-              </Popconfirm>
-            </Menu>
-          </div>
         <Content
           style={{
             margin: '24px 16px 0',

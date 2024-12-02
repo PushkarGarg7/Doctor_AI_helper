@@ -6,6 +6,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from pymongo.server_api import ServerApi
 from pymongo import MongoClient
+from crew import Crew, Process, symptom_agent, question_agent, symptom_task, questions_task
 import bcrypt
 
 app = Flask(__name__)
@@ -134,10 +135,36 @@ def generate_disease_probabilities():
     questions = {disease: disease_questions.get(disease, ["No specific questions available"]) for disease in top_3_diseases}
     
     return {
-        "disease_probabilities": disease_probabilities,
-        "top_3_diseases": top_3_diseases,
-        "questions": questions
+        "disease_probabilities" : disease_probabilities,
+        "top_3_diseases" : top_3_diseases,
+        "questions" : questions
     }
+
+crew = Crew(
+    agents=[symptom_agent, question_agent],
+    tasks=[symptom_task, questions_task],
+    process=Process.sequential,
+    memory=True,
+    cache=True,
+    max_rpm=100,
+    share_crew=True
+)
+
+def executeCrewTasks(top_diseases, age, gender):
+    # data = request.json
+    # top_diseases = data.get("diseases", ["Atelectasis", "Consolidation", "Pneumonia"])
+    # age = data.get("age", 45)
+    # gender = data.get("gender", "male")
+
+    # Start the task execution process
+    result = crew.kickoff(inputs={
+        'diseases': ", ".join(top_diseases),
+        'age': age,
+        'gender': gender
+    })
+
+    return result
+
 
 # Configure upload folder and allowed extensions
 # UPLOAD_FOLDER = 'uploads'
@@ -168,8 +195,13 @@ def upload_image():
 
         # Generate disease probabilities and get questions for top 3 diseases
         probabilities_data = generate_disease_probabilities()
+
+        top_diseases = probabilities_data["disease_probabilities"]
+        # task_result = executeCrewTasks(top_diseases, age,gender)
+        
         response = {
             "disease_data": probabilities_data,
+            # "task_result": task_result  # Add result from execute_tasks
         }
         
         return jsonify(response), 201
