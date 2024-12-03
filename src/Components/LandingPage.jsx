@@ -15,16 +15,17 @@ import Gaurav from '../Assets/Gaurav.jpeg';
 import Abhinav from '../Assets/Abhinav.jpeg';
 import Pushkar from '../Assets/Pushkar.jpeg';
 import Chirag from '../Assets/Chirag.png';
-import Nandini from '../Assets/Nandini.jpeg';
+import Shaunak from '../Assets/shaunak.jpg';
+import Kanu from '../Assets/kanu.jpg';
 
 const LandingPage = () => {
   const teamMembers = [
     {
-      name: 'Chirag Garg',
+      name: 'Shaunak Gupta',
       role: 'Backend Developer',
       linkedIn: '#',
       github: '#',
-      image: Chirag,
+      image: Shaunak,
       description: 'Passionate about building innovative web applications, continuously learning new technologies, and striving to improve user experiences through creative solutions'
     },
     {
@@ -44,11 +45,11 @@ const LandingPage = () => {
       description: 'Dedicated to creating responsive user interfaces, optimizing performance, and enhancing user experiences with modern web technologies'
     },
     {
-      name: 'Nandini Gera',
-      role: 'Backend Engineer',
+      name: 'Dr. Kanu Goel',
+      role: 'Mentor',
       linkedIn: '#',
       github: '#',
-      image: Nandini,
+      image: Kanu,
       description: 'Backend engineer focused on developing robust server-side applications, managing databases, and ensuring seamless integration with frontend technologies'
     },
     {
@@ -134,7 +135,7 @@ const LandingPage = () => {
 
       {/* Add the RoundedButton below the feature box */}
       <div style={{ marginBottom: '50px', textAlign: 'center' }}>
-        <RoundedButton routeLink="/upload" label="Try PDF Genie" />
+        <RoundedButton routeLink="/upload" label="Try X-Ray Image Analysis" />
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '40px', marginBottom: '20px' }}>

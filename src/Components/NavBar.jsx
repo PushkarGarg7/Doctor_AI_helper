@@ -4,21 +4,6 @@ import RoundedButton from "./RoundedButton";
 import LogOut from "./Logout";
 
 function Navbar() {
-    const [logOut, setLogOut] = useState(false);
-
-    useEffect(() => {
-        const user = JSON.parse(localStorage.getItem('userDetails'));
-        if (user) {
-            setLogOut(true);
-        }
-    }, []);
-
-    const scrollToSection = (id) => {
-        const section = document.getElementById(id);
-        if (section) {
-            section.scrollIntoView({ behavior: 'smooth' });
-        }
-    };
 
     return (
         <div className="custom-navbar">
@@ -49,16 +34,11 @@ function Navbar() {
             </div>
             <div className="custom-nav-right">
                 <ul className="custom-nav-links">
-                    {logOut &&
-                        <>
-                            <RoundedButton routeLink="/upload" label="PDF Genie" style={{ backgroundColor: '#9bd0f4', color: 'white' }} />
-                        </>}
-                    {!logOut &&
-                        <>
-                            <RoundedButton routeLink="/login" label="LogIn" style={{ backgroundColor: '#9bd0f4', color: 'white' }} />
-                            <RoundedButton routeLink="/signUp" label="SignUp" style={{ backgroundColor: '#9bd0f4', color: 'black' }} />
-                        </>}
-                    {logOut && <LogOut />}
+                    <RoundedButton routeLink="/rag" label="X-Ray Analysis" style={{ backgroundColor: '#9bd0f4', color: 'white' }} />
+
+                    <RoundedButton routeLink="/login" label="LogIn" style={{ backgroundColor: '#9bd0f4', color: 'white' }} />
+                    <RoundedButton routeLink="/signUp" label="SignUp" style={{ backgroundColor: '#9bd0f4', color: 'black' }} />
+                
                 </ul>
             </div>
         </div>
