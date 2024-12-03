@@ -6,7 +6,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from pymongo.server_api import ServerApi
 from pymongo import MongoClient
-from crew import Crew, Process, symptom_agent, question_agent, symptom_task, questions_task
+from crew import Crew, Process, symptom_agent, question_agent, symptom_task, questions_task, analysis_agent, analysis_task
 import bcrypt
 
 app = Flask(__name__)
@@ -140,14 +140,25 @@ def generate_disease_probabilities():
         "questions" : questions
     }
 
-crew = Crew(
-    agents=[symptom_agent, question_agent],
-    tasks=[symptom_task, questions_task],
-    process=Process.sequential,
-    memory=True,
-    cache=True,
-    max_rpm=100,
-    share_crew=True
+# Forming the tech-focused crew with some enhanced configurations
+crew_1 = Crew(
+  agents=[symptom_agent, question_agent],
+  tasks=[symptom_task, questions_task],
+  process=Process.sequential,  # Optional: Sequential task execution is default
+  memory=True,
+  cache=True,
+  max_rpm=100,
+  share_crew=True
+)
+
+crew_2 = Crew(
+  agents=[analysis_agent],
+  tasks=[analysis_task],
+  process=Process.sequential,  # Optional: Sequential task execution is default
+  memory=True,
+  cache=True,
+  max_rpm=100,
+  share_crew=True
 )
 
 def executeCrewTasks(top_diseases, age, gender):

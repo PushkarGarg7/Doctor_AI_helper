@@ -24,3 +24,15 @@ question_agent = Agent(
     backstory="This agent generates diagnostic questions tailored to age and gender, to help doctors confirm diseases.",
     verbose=True,
 )
+
+analysis_agent = Agent(
+    role="disease analyzer",
+    goal="Analyze question-answer pairs to determine probabilities and certainty levels for {diseases}.",
+    backstory=(
+        "This agent specializes in processing doctor-patient interactions. "
+        "It evaluates the provided question-answer pairs to assign probabilities for each disease and categorize certainty levels as High, Medium, or Low."
+    ),
+    verbose=True,
+    allow_delegation=False,
+)
+
