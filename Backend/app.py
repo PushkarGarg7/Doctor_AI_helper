@@ -9,6 +9,8 @@ from pymongo import MongoClient
 from crew import Crew, Process, symptom_agent, question_agent, symptom_task, questions_task, analysis_agent, analysis_task
 from cnn import load_model, predict
 import bcrypt
+import json
+import re
 
 app = Flask(__name__)
 load_dotenv()
@@ -131,11 +133,10 @@ def CnnCall():
         # print("-----")
         # print(predictions, "HeLLO")
         formatted_predictions = format_predictions_to_dict(predictions, all_labels)
-        print("-----")
-        print(formatted_predictions)
-        print("-----")
+        for key in formatted_predictions:
+            formatted_predictions[key] = float(formatted_predictions[key])
         response = {"predictions": formatted_predictions}
-        return jsonify(formatted_predictions), 201
+        return jsonify(response), 201
     except:
         return jsonify({"error": "Server Error"}), 500
 
@@ -150,16 +151,46 @@ def rag1():
 
         if not all([age, gender, top_probabilities]):
             return jsonify({"error": "Missing required fields"}), 400
-
+      
+        print(top_probabilities)
         # Process the data (replace with actual logic for RAG model)
         task_result = executeCrewTasks(top_probabilities, age,gender)
+        print(type(task_result))
+        # task_result = {
+        #     "Effusion": [
+        #         "Have you experienced shortness of breath or difficulty breathing, particularly when lying down?",
+        #         "Are you experiencing any chest pain, and does it worsen with coughing or taking deep breaths?",
+        #         "Do you feel a sense of fullness in your abdomen, or have you noticed swelling in your legs or feet?",
+        #         "Have you noticed any decrease in mobility or discomfort in a specific area of your body?",
+        #         "Have there been any recent infections or injuries that might have led to fluid accumulation?"
+        #     ],
+        #     "Edema": [
+        #         "Where is the swelling located, and how long have you noticed it?",
+        #         "Does the swollen area leave an indentation when pressed and then retains its shape?",
+        #         "Is the skin over the swollen area appearing stretched, shiny, or discolored?",
+        #         "Have you experienced an increase in abdominal size or problems with mobility?",
+        #         "Are there any associated symptoms, such as shortness of breath or weight gain?"
+        #     ],
+        #     "Hernia": [
+        #         "Can you describe the exact location and size of any lump or bulge you have noticed?",
+        #         "Does this bulge become more noticeable when you stand, cough, or lift heavy objects?",
+        #         "Do you experience pain or discomfort in the bulge area, especially when bending over or lifting?",
+        #         "Is the bulge reducible, meaning, can you or your doctor push it back in?",
+        #         "Have you had any previous surgeries in the area where the bulge is located?"
+        #     ]
+        #     }
         print(task_result)
-        rag_result = {
-            "top_diseases": top_probabilities,
-            "questions": ["Question 1", "Question 2", "Question 3"]
-        }
+        raw_json_string = task_result.raw  # Ensure 'raw' is the correct field
+    
+        # Remove unnecessary backticks or code block markers if present
+        if raw_json_string.startswith("```json") and raw_json_string.endswith("```"):
+            raw_json_string = raw_json_string[7:-3].strip()  # Remove ```json and ```
 
-        return jsonify(rag_result), 200
+        # Parse the JSON string into a Python dictionary
+        parsed_data = json.loads(raw_json_string)
+        
+        # Convert to JSON response (if using Flask, for example)
+        return jsonify(parsed_data), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -230,18 +261,14 @@ crew_2 = Crew(
 )
 
 def executeCrewTasks(top_diseases, age, gender):
-    # data = request.json
-    # top_diseases = data.get("diseases", ["Atelectasis", "Consolidation", "Pneumonia"])
-    # age = data.get("age", 45)
-    # gender = data.get("gender", "male")
+    diseases_dict = {list(disease_dict.keys())[0]: list(disease_dict.values())[0] for disease_dict in top_diseases}
 
     # Start the task execution process
-    result = crew.kickoff(inputs={
-        'diseases': ", ".join(top_diseases),
+    result = crew_1.kickoff(inputs={
+        'diseases': diseases_dict,  # Send diseases as a dictionary
         'age': age,
         'gender': gender
     })
-
     return result
 
 

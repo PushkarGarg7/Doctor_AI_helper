@@ -57,15 +57,16 @@ const UploadHelper = () => {
       });
       console.log(response);
       // setDynamicNumbers(response.data.predictions);
-      if(response.status === 201){
-        message.success('File uploaded successfully!');
-        setTimeout(() => {
-          setDynamicNumbers(response.data.disease_data.disease_probabilities); // Update dynamic numbers from server response
-          // setDiseaseQuestions(response.data.disease_data.questions);
-        }, 1000);
-      }
+      // if(response.status === 201){
+      //   message.success('File uploaded successfully!');
+      //   setTimeout(() => {
+      //     setDynamicNumbers(response.data.disease_data.disease_probabilities); // Update dynamic numbers from server response
+      //     // setDiseaseQuestions(response.data.disease_data.questions);
+      //   }, 1000);
+      // }
       if (response.status === 201) {
         const probabilities = response.data.disease_data.disease_probabilities; // Assuming response contains probabilities array
+        console.log(probabilities);
         message.success('File uploaded successfully!');
         setTimeout(() => {
           setDynamicNumbers(probabilities); // Update dynamic numbers from server response
@@ -73,21 +74,22 @@ const UploadHelper = () => {
         }, 1000);
   
         // Step 2: Extract top 3 probabilities with disease names
-        const topProbabilities = probabilities
-          .map((prob, index) => ({ disease: diseaseNames[index], probability: prob })) // Map disease names
-          .sort((a, b) => b.probability - a.probability) // Sort by probabilities descending
-          .slice(0, 3) // Take top 3
-          .map(item => ({ [item.disease]: item.probability })); // Convert to key-value pairs
-  
+        const topProbabilities = Object.entries(probabilities) // Convert object to array of [key, value] pairs
+        .map(([disease, probability]) => ({ disease, probability })) // Map to an array of objects
+        .sort((a, b) => b.probability - a.probability) // Sort by probability in descending order
+        .slice(0, 3) // Take top 3
+        .map(item => ({ [item.disease]: item.probability })); // Convert to key-value pairs
+        console.log(topProbabilities)
         // Step 3: Call /rag1 with age, gender, and top probabilities
         const ragRequestData = {
-          age,
-          gender,
-          top_probabilities: topProbabilities
+        age,
+        gender,
+        top_probabilities: topProbabilities
         };
-  
+        console.log(ragRequestData);
         const ragResponse = await axios.post('http://localhost:5000/rag1', ragRequestData);
-  
+
+        console.log(ragResponse);
         if (ragResponse.status === 200) {
           message.success('Data processed successfully!');
           setDiseaseQuestions(ragResponse.data); // Update questions
@@ -95,7 +97,7 @@ const UploadHelper = () => {
       }
 
     } catch (error) {
-      message.error('Failed to upload file.');
+      message.error('Failed');
       console.error(error);
     }
   };
