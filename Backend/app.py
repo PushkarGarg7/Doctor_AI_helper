@@ -11,6 +11,11 @@ from cnn import load_model, predict
 import bcrypt
 import json
 import re
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+import random
 
 app = Flask(__name__)
 load_dotenv()
@@ -20,12 +25,6 @@ client = MongoClient(mongo_uri, server_api=ServerApi('1'))
 users_collection = client.myapp.users
 TEMP_DIR = './temp'
 os.makedirs(TEMP_DIR, exist_ok=True)
-
-# Full list of diseases
-diseases = [
-    "Atelectasis", "Consolidation", "Infiltration", "Pneumothorax", "Edema", "Emphysema",
-    "Fibrosis", "Effusion", "Pneumonia", "Pleural_thickening", "Cardiomegaly", "Nodule Mass", "Hernia"
-]
 
 
 aws_access_key_id=os.getenv('AWS_ACCESS_KEY')
@@ -44,77 +43,7 @@ s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
 
 BUCKET_NAME = os.getenv('BUCKET_NAME')
 
-
-# Questions associated with each disease
-disease_questions = {
-    "Atelectasis": [
-        "Are you experiencing a sudden onset of difficulty breathing or shortness of breath?",
-        "Do you have a cough that produces mucus?",
-        "Are you experiencing wheezing without a history of asthma?"
-    ],
-    "Consolidation": [
-        "Have you coughed up blood or blood-stained mucus recently?",
-        "Are you experiencing unexplained weight loss or night sweats?",
-        "Have you had a fever, and how high has it been?"
-    ],
-    "Infiltration": [
-        "Do you feel a tightness in your chest or discomfort when breathing deeply?",
-        "Are you coughing up yellow or green mucus?",
-        "Have you noticed any recent fatigue or low energy levels?"
-    ],
-    "Pneumothorax": [
-        "Do you have sudden, sharp chest pain on one side of your chest?",
-        "Are you experiencing shortness of breath that worsens with activity?",
-        "Have you recently had a chest injury or trauma?"
-    ],
-    "Edema": [
-        "Are you experiencing swelling in your legs, ankles, or feet?",
-        "Do you have difficulty breathing when lying down or at night?",
-        "Have you noticed sudden weight gain or bloating?"
-    ],
-    "Emphysema": [
-        "Do you have a chronic cough that produces mucus, particularly in the morning?",
-        "Are you experiencing a wheezing or whistling sound when breathing?",
-        "Have you noticed shortness of breath, especially during physical activities?"
-    ],
-    "Fibrosis": [
-        "Are you experiencing a persistent dry cough?",
-        "Do you feel short of breath even when at rest?",
-        "Have you noticed fatigue or muscle and joint aches?"
-    ],
-    "Effusion": [
-        "Do you have chest pain that worsens with deep breaths or coughs?",
-        "Are you experiencing difficulty breathing while lying down?",
-        "Have you had a recent infection or surgery in your chest area?"
-    ],
-    "Pneumonia": [
-        "Do you have a high fever, and if so, how high has it been?",
-        "Have you experienced confusion or changes in mental awareness?",
-        "Is your cough dry or are you coughing up phlegm? What color is the phlegm?"
-    ],
-    "Pleural_thickening": [
-        "Do you have a persistent dry cough that doesn’t improve?",
-        "Are you experiencing any chest pain or discomfort?",
-        "Have you had exposure to asbestos or other chemicals in the past?"
-    ],
-    "Cardiomegaly": [
-        "Do you experience swelling in your legs or abdomen?",
-        "Are you frequently short of breath, especially during physical activities?",
-        "Have you noticed an irregular heartbeat or palpitations?"
-    ],
-    "Nodule Mass": [
-        "Do you have unexplained chest pain or discomfort?",
-        "Have you noticed any hoarseness or changes in your voice?",
-        "Do you feel short of breath with minimal activity?"
-    ],
-    "Hernia": [
-        "Do you have a bulge or lump in your abdomen or groin area?",
-        "Are you experiencing discomfort when bending over or lifting?",
-        "Have you noticed pain in your chest after heavy meals?"
-    ]
-}
-
-MODEL_WEIGHTS_PATH = r'C:\Users\Gaurav\Downloads\multi_disease_model.h5'
+MODEL_WEIGHTS_PATH = "C:\Abhinav\Abhinav\PEC\Major Project\model_weights.weights.h5"
 model = load_model(MODEL_WEIGHTS_PATH)
 
 def format_predictions_to_dict(predictions, labels):
@@ -150,7 +79,8 @@ def CnnCall():
         # print(predictions, "HeLLO")
         formatted_predictions = format_predictions_to_dict(predictions, all_labels)
         for key in formatted_predictions:
-            formatted_predictions[key] = float(formatted_predictions[key])
+            # formatted_predictions[key] = float(formatted_predictions[key])
+            formatted_predictions[key] = float(round(formatted_predictions[key], 3))
         response = {"predictions": formatted_predictions}
         return jsonify(response), 201
     except:
@@ -172,29 +102,6 @@ def rag1():
         # Process the data (replace with actual logic for RAG model)
         task_result = executeCrewTasks(top_probabilities, age,gender)
         print(type(task_result))
-        # task_result = {
-        #     "Effusion": [
-        #         "Have you experienced shortness of breath or difficulty breathing, particularly when lying down?",
-        #         "Are you experiencing any chest pain, and does it worsen with coughing or taking deep breaths?",
-        #         "Do you feel a sense of fullness in your abdomen, or have you noticed swelling in your legs or feet?",
-        #         "Have you noticed any decrease in mobility or discomfort in a specific area of your body?",
-        #         "Have there been any recent infections or injuries that might have led to fluid accumulation?"
-        #     ],
-        #     "Edema": [
-        #         "Where is the swelling located, and how long have you noticed it?",
-        #         "Does the swollen area leave an indentation when pressed and then retains its shape?",
-        #         "Is the skin over the swollen area appearing stretched, shiny, or discolored?",
-        #         "Have you experienced an increase in abdominal size or problems with mobility?",
-        #         "Are there any associated symptoms, such as shortness of breath or weight gain?"
-        #     ],
-        #     "Hernia": [
-        #         "Can you describe the exact location and size of any lump or bulge you have noticed?",
-        #         "Does this bulge become more noticeable when you stand, cough, or lift heavy objects?",
-        #         "Do you experience pain or discomfort in the bulge area, especially when bending over or lifting?",
-        #         "Is the bulge reducible, meaning, can you or your doctor push it back in?",
-        #         "Have you had any previous surgeries in the area where the bulge is located?"
-        #     ]
-        #     }
         print(task_result)
         raw_json_string = task_result.raw  # Ensure 'raw' is the correct field
     
@@ -212,113 +119,127 @@ def rag1():
         return jsonify({"error": str(e)}), 500
 
 
-def generate_pdf(raw_json_string):
-    return
 
-def get_pdf_link(pdf):
-    unique_filename = f"{uuid.uuid4()}"
+def generate_pdf(name, height, gender, weight, raw_json_string):
+    # Convert the raw_json_string into a list of points (this depends on the structure of raw_json_string)
+    points = []
+    try:
+        points = [f"{key}: {value}" for key, value in raw_json_string.items()]
+    except AttributeError:
+        points = [str(raw_json_string)]
+    
+    # Create an in-memory PDF buffer
+    pdf = SimpleDocTemplate("outputwdef.pdf", pagesize=letter)
+
+    # Set styles
+    styles = getSampleStyleSheet()
+    title_style = styles['Title']
+    normal_style = styles['Normal']
+    heading_style = styles['Heading2']
+
+    # Header with name, height, weight, and gender
+    title = Paragraph(f"Patient Information: {name}", title_style)
+    user_info_text = Paragraph(
+        f"<b>Name:</b> {name} &nbsp;&nbsp;&nbsp; <b>Height:</b> {height} cm &nbsp;&nbsp;&nbsp; <b>Weight:</b> {weight} kg &nbsp;&nbsp;&nbsp; <b>Gender:</b> {gender}",
+        normal_style
+    )
+
+    # Create a table for the user details
+    info_data = [["Name:", name], ["Height:", f"{height} cm"], ["Weight:", f"{weight} kg"], ["Gender:", gender]]
+    info_table = Table(info_data, colWidths=[70, 200])
+    info_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                                   ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                                   ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                                   ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                                   ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                                   ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                                   ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+
+    # Create a section for the raw_json_string data points
+    points_heading = Paragraph("Key Points from Analysis", heading_style)
+    points_paragraph = Paragraph("<br />".join(points), normal_style)
+
+    # Add all elements to the PDF
+    elements = [
+        title,
+        Spacer(1, 10),
+        user_info_text,
+        Spacer(1, 20),
+        info_table,
+        Spacer(1, 20),
+        points_heading,
+        Spacer(1, 10),
+        points_paragraph
+    ]
+
+    # Build the PDF in memory
+    pdf.build(elements)
+    print("pdf generated successfully!")
+    base_path = os.path.dirname(__file__)  # This gives the current directory of the script
+    file_path = os.path.join(base_path, "outputwdef.pdf")
+    print(file_path)
+    return file_path
+
+
+
+def get_pdf_link(local_pdf_path):
+    unique_filename = f"{uuid.uuid4()}.pdf"  # Use a unique filename for the S3 upload
+    print("Uploading PDF to S3...")
 
     try:
-        # Upload file to S3
-        pdf.seek(0)
-        s3.upload_fileobj(pdf, BUCKET_NAME, unique_filename, ExtraArgs={'ContentType': 'application/pdf'})
-        
+        # Open the locally saved PDF file and upload it to S3
+        with open(local_pdf_path, 'rb') as pdf_file:
+            s3.upload_fileobj(pdf_file, BUCKET_NAME, unique_filename, ExtraArgs={'ContentType': 'application/pdf'})
+
         # Construct the file URL
         file_url = f"https://{BUCKET_NAME}.s3.{s3.meta.region_name}.amazonaws.com/{unique_filename}"
-        
+        print("PDF successfully uploaded to S3 at:", file_url)
+
         return file_url
+
     except NoCredentialsError:
         return jsonify({'error': 'Credentials not available'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
+
 @app.route('/rag2', methods=['POST'])
 def rag2():
     try:
         # Parse input JSON
+        
         data = request.json
         top_diseases = data.get('top_diseases')
         question_answers = data.get('question_answers')
-        # print(top_diseases)
-        # print("-------")
-        # print(question_answers)
+        name = data.get("name")
+        age = data.get("age")
+        height = data.get("height")
+        weight = data.get("weight")
+        gender = data.get("gender")
+        
         # Validate inputs
         if not isinstance(top_diseases, list) or not isinstance(question_answers, dict):
             return jsonify({"error": "Invalid input format"}), 400
-        print(2)
+
         # Call the function with provided data
         task_result = executeCrewTasks2(top_diseases, question_answers)
-        print(3)
-        print(task_result)
+        
+        # Extract raw_json_string from task_result
         raw_json_string = task_result.raw 
 
-        pdf = generate_pdf(raw_json_string)
-
-        pdf_link = get_pdf_link(pdf)
-
-        return jsonify(pdf_link), 200
-        # print("--------")
-        # print(type(raw_json_string))
-        # print(raw_json_string) # Ensure 'raw' is the correct field
-
-
-
-        # # Parse the JSON string into a Python dictionary
-        # parsed_data = json.loads(raw_json_string)
-        # print("-------")
-        # print(parsed_data)
+        # Generate PDF with all required data
+        local_pdf_link = generate_pdf(name, height, gender, weight, raw_json_string)
         
-        # # Convert to JSON response (if using Flask, for example)
-        # return jsonify(parsed_data), 200
-        # return jsonify(result), 200
+        # Get the URL of the PDF from S3
+        pdf_link = get_pdf_link(local_pdf_link)
+        
+        return jsonify({"pdf_link": pdf_link}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-# def generate_disease_probabilities():
-
-#     # Step 1: Randomly select three diseases for higher probabilities
-#     selected_indices = np.random.choice(len(diseases), 3, replace=False)
-#     selected_probabilities = np.random.uniform(0.2, 0.4, 3)
-#     selected_probabilities /= selected_probabilities.sum()  # Normalize to sum to 1 within selected range
-#     selected_probabilities *= 0.8  # Scale to make the sum of these three around 0.8
-
-#     # Step 2: Assign these high probabilities to the selected diseases
-#     probabilities = np.zeros(len(diseases))
-#     for i, idx in enumerate(selected_indices):
-#         probabilities[idx] = selected_probabilities[i]
-
-#     # Step 3: Calculate remaining probability for other diseases
-#     remaining_prob = 1 - probabilities[selected_indices].sum()
-#     remaining_indices = [i for i in range(len(diseases)) if i not in selected_indices]
-
-#     # Step 4: Distribute remaining probability across other diseases with low but non-zero values
-#     remaining_probabilities = np.random.uniform(0.01, 0.05, len(remaining_indices))
-#     remaining_probabilities /= remaining_probabilities.sum()  # Normalize to sum to 1
-#     remaining_probabilities *= remaining_prob  # Scale to the remaining probability
-
-#     # Step 5: Assign these lower probabilities to the remaining diseases
-#     for i, idx in enumerate(remaining_indices):
-#         probabilities[idx] = remaining_probabilities[i]
-
-#     # Step 6: Trim probabilities to 3 decimal places and create dictionary
-#     probabilities = np.round(probabilities, 3)
-#     disease_probabilities = dict(zip(diseases, probabilities))
-
-    
-#     # Get the top 3 diseases with the highest probabilities
-#     top_3_diseases = sorted(disease_probabilities, key=disease_probabilities.get, reverse=True)[:3]
-    
-#     # Prepare questions for the top 3 diseases if available in the questions dictionary
-#     questions = {disease: disease_questions.get(disease, ["No specific questions available"]) for disease in top_3_diseases}
-    
-#     return {
-#         "disease_probabilities" : disease_probabilities,
-#         "top_3_diseases" : top_3_diseases,
-#         "questions" : questions
-#     }
 
 # Forming the tech-focused crew with some enhanced configurations
 crew_1 = Crew(

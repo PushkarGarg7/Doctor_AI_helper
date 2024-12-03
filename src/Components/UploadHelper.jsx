@@ -26,7 +26,10 @@ const UploadHelper = () => {
   const [height, setHeight] = useState('');
   const [diseaseQuestions, setDiseaseQuestions] = useState({}); // Store questions from server response
   const [responses, setResponses] = useState({}); // Store user responses to questions
+  const [highestProbablities, setHighestProbablities] = useState([]);
   const [mappedData, setMappedData] = useState([]);
+  const [generatedLink, setGeneratedLink] = useState(null);
+
 
   // Function to handle image upload with additional fields
   const handleFileChange = (info) => {
@@ -43,7 +46,7 @@ const UploadHelper = () => {
       message.warning("Please complete all fields before submitting.");
       return;
     }
-    debugger;
+    // debugger;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('age', age);
@@ -52,7 +55,7 @@ const UploadHelper = () => {
     formData.append('height', height);
     formData.append('name', name);
     try {
-      const response = await axios.post('http://localhost:5000/upload', formData, {
+      const response = await axios.post('http://localhost:5000/cnn', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log(response);
@@ -65,13 +68,14 @@ const UploadHelper = () => {
       //   }, 1000);
       // }
       if (response.status === 201) {
-        const probabilities = response.data.disease_data.disease_probabilities; // Assuming response contains probabilities array
+        const probabilities = response.data.predictions; // Assuming response contains probabilities array
         console.log(probabilities);
         message.success('File uploaded successfully!');
-        setTimeout(() => {
-          setDynamicNumbers(probabilities); // Update dynamic numbers from server response
-          // setDiseaseQuestions(response.data.disease_data.questions);
-        }, 1000);
+        // setTimeout(() => {
+        //   setDynamicNumbers(probabilities); // Update dynamic numbers from server response
+        //   // setDiseaseQuestions(response.data.disease_data.questions);
+        // }, 1000);
+        setDynamicNumbers(probabilities);
   
         // Step 2: Extract top 3 probabilities with disease names
         const topProbabilities = Object.entries(probabilities) // Convert object to array of [key, value] pairs
@@ -80,6 +84,8 @@ const UploadHelper = () => {
         .slice(0, 3) // Take top 3
         .map(item => ({ [item.disease]: item.probability })); // Convert to key-value pairs
         console.log(topProbabilities)
+        setHighestProbablities(topProbabilities)
+
         // Step 3: Call /rag1 with age, gender, and top probabilities
         const ragRequestData = {
         age,
@@ -102,12 +108,49 @@ const UploadHelper = () => {
     }
   };
 
+  useEffect(() => {
+    // Initialize responses once diseaseQuestions are available
+    if (Object.keys(diseaseQuestions).length > 0) {
+      const initialResponses = {};
+      Object.entries(diseaseQuestions).forEach(([disease, questions]) => {
+        initialResponses[disease] = questions.map((question) => ({
+          question,
+          answer: "", // Default empty answer
+        }));
+      });
+      setResponses(initialResponses);
+    }
+  }, [diseaseQuestions]);
 
+  
   // Function to handle submission of disease responses
   const handleSubmitResponses = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/responses', { responses });
-      message.success('Responses submitted successfully!');
+      const TEMP_DIR = './temp';
+      const generateFilePath = (fileName) => {
+        return `${TEMP_DIR}/${fileName}`;
+      };
+      const filePath = generateFilePath(file.name);
+      const payload = {
+        "top_diseases": highestProbablities,
+        "name" : name,
+        "age" : age,
+        "gender" : gender,
+        "height" : height,
+        "weight" : weight,
+        "question_answers" : responses, // Directly pass the structured `responses`
+        "image_path" : filePath
+      };
+    
+      console.log("Payload to submit:", payload);
+      const response = await axios.post('http://localhost:5000/rag2', payload );
+      if (response.status === 200 && response.data.pdf_link) {
+        setGeneratedLink(response.data.pdf_link); // Save the link from the server
+        console.log(generatedLink);
+        message.success("Responses submitted successfully!");
+      } else {
+        message.warning("Submission succeeded but no link was provided.");
+      }
     } catch (error) {
       message.error('Failed to submit responses.');
       console.error(error);
@@ -118,10 +161,9 @@ const UploadHelper = () => {
   const handleResponseChange = (disease, questionIndex, value) => {
     setResponses((prevResponses) => ({
       ...prevResponses,
-      [disease]: {
-        ...prevResponses[disease], // Preserve existing responses for the disease
-        [questionIndex]: value, // Update the specific question's response
-      },
+      [disease]: prevResponses[disease].map((qa, idx) =>
+        idx === questionIndex ? { ...qa, answer: value } : qa
+      ),
     }));
   };
   
@@ -325,20 +367,20 @@ const UploadHelper = () => {
               <h2 style={{ marginBottom: '8px', fontSize: '20px', color: '#333' }}>
                 {disease}
               </h2> {/* Disease heading */}
-              {questions.map((question, index) => (
+              {(responses[disease] || []).map((qa, index) => ( // Add default fallback to empty array
                 <Row key={index} align="middle" style={{ marginBottom: '8px' }}>
                   {/* Display the question */}
                   <Col span={16}>
-                    <Text>{question}</Text>
+                    <Text>{qa.question}</Text>
                   </Col>
                   {/* Display the corresponding TextArea */}
                   <Col span={8}>
                     <TextArea
                       placeholder="Type your response here"
                       onChange={(e) =>
-                        handleResponseChange(disease, index, e.target.value) // Add index for question-specific response
+                        handleResponseChange(disease, index, e.target.value) // Update the specific response
                       }
-                      value={responses[disease]?.[index] || ''} // Use index for the specific response
+                      value={qa.answer} // Bind to the specific answer
                       rows={1}
                       style={{
                         width: '100%',
@@ -355,6 +397,7 @@ const UploadHelper = () => {
           ))}
         </Row>
 
+
         <Button
           type="primary"
           onClick={handleSubmitResponses}
@@ -362,6 +405,34 @@ const UploadHelper = () => {
         >
           Submit Responses
         </Button>
+        {generatedLink && (
+          <div
+            style={{
+              marginTop: "20px",
+              padding: "10px",
+              border: "1px solid #d9d9d9",
+              borderRadius: "4px",
+              backgroundColor: "#f6f6f6",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: "16px", color: "#333" }}>
+              <strong>Generated Link:</strong>
+            </p>
+            <a
+              href={generatedLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-block",
+                marginTop: "5px",
+                color: "#1890ff",
+                textDecoration: "underline",
+              }}
+            >
+              {generatedLink}
+            </a>
+          </div>
+        )}
         </Content>
       </Layout>
     </Layout>
