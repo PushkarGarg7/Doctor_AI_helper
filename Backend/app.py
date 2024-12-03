@@ -15,6 +15,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
 import random
 
 app = Flask(__name__)
@@ -119,67 +120,83 @@ def rag1():
         return jsonify({"error": str(e)}), 500
 
 
-
-def generate_pdf(name, height, gender, weight, raw_json_string):
-    # Convert the raw_json_string into a list of points (this depends on the structure of raw_json_string)
-    points = []
-    try:
-        points = [f"{key}: {value}" for key, value in raw_json_string.items()]
-    except AttributeError:
-        points = [str(raw_json_string)]
-    
-    # Create an in-memory PDF buffer
-    pdf = SimpleDocTemplate("outputwdef.pdf", pagesize=letter)
-
-    # Set styles
+def generate_pdf(name, age, height, gender, weight, raw_json_string, top_diseases, xray_image_path="../img1.png"):
+    pdf_path = "Preliminary_Report.pdf"
+    pdf = SimpleDocTemplate(pdf_path, pagesize=letter)
     styles = getSampleStyleSheet()
     title_style = styles['Title']
     normal_style = styles['Normal']
     heading_style = styles['Heading2']
+    
+    # Title
+    title = Paragraph("Preliminary Report", title_style)
+    spacer = Spacer(1, 12)
 
-    # Header with name, height, weight, and gender
-    title = Paragraph(f"Patient Information: {name}", title_style)
-    user_info_text = Paragraph(
-        f"<b>Name:</b> {name} &nbsp;&nbsp;&nbsp; <b>Height:</b> {height} cm &nbsp;&nbsp;&nbsp; <b>Weight:</b> {weight} kg &nbsp;&nbsp;&nbsp; <b>Gender:</b> {gender}",
-        normal_style
-    )
+    # Patient Info Table
+    patient_data = [
+        ["Name:", name],
+        ["Age:", f"{age} years"],
+        ["Gender:", gender],
+        ["Height:", f"{height} cm"],
+        ["Weight:", f"{weight} kg"]
+    ]
+    patient_table = Table(patient_data, colWidths=[70, 200])
+    patient_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
 
-    # Create a table for the user details
-    info_data = [["Name:", name], ["Height:", f"{height} cm"], ["Weight:", f"{weight} kg"], ["Gender:", gender]]
-    info_table = Table(info_data, colWidths=[70, 200])
-    info_table.setStyle(TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                                   ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                                   ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                                   ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                                   ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                                   ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                                   ('GRID', (0, 0), (-1, -1), 1, colors.black)]))
+    # X-ray Image
+    xray_image = Image(xray_image_path, width=3 * inch, height=3 * inch)
+    xray_image.hAlign = 'CENTER'
 
-    # Create a section for the raw_json_string data points
-    points_heading = Paragraph("Key Points from Analysis", heading_style)
-    points_paragraph = Paragraph("<br />".join(points), normal_style)
+    # Diseases and Probabilities Table
+    disease_table_data = [["Disease", "Probability"]]
+    for disease in top_diseases:
+        for key, value in disease.items():
+            disease_table_data.append([key, f"{value * 100:.2f}%"])
 
-    # Add all elements to the PDF
+    disease_table = Table(disease_table_data, colWidths=[150, 150])
+    disease_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+
+    # Insights from Raw JSON String
+    formatted_raw_json = clean_and_format_raw_json(raw_json_string)
+    print('------------')
+    print(formatted_raw_json)
+    raw_json_paragraphs = []
+    for paragraph in formatted_raw_json.split("<BR/>"):
+        raw_json_paragraphs.append(Paragraph(paragraph.strip(), normal_style))
+        raw_json_paragraphs.append(Spacer(1, 6))  # Add space between paragraphs
+
+    # Assemble Elements
     elements = [
         title,
-        Spacer(1, 10),
-        user_info_text,
-        Spacer(1, 20),
-        info_table,
-        Spacer(1, 20),
-        points_heading,
-        Spacer(1, 10),
-        points_paragraph
-    ]
+        spacer,
+        patient_table,
+        Spacer(1, 12),
+        xray_image,
+        Spacer(1, 24),
+        Paragraph("Diseases and Probabilities", heading_style),
+        Spacer(1, 6),
+        disease_table,
+        Spacer(1, 24),
+        Paragraph("Analysis Insights", heading_style),
+        Spacer(1, 6),
+    ] + raw_json_paragraphs  # Add JSON paragraphs with spacers
 
-    # Build the PDF in memory
     pdf.build(elements)
-    print("pdf generated successfully!")
-    base_path = os.path.dirname(__file__)  # This gives the current directory of the script
-    file_path = os.path.join(base_path, "outputwdef.pdf")
-    print(file_path)
-    return file_path
-
+    print(f"PDF generated: {pdf_path}")
+    return pdf_path
 
 
 def get_pdf_link(local_pdf_path):
@@ -204,19 +221,39 @@ def get_pdf_link(local_pdf_path):
 
 
 
+import re
+
+def clean_and_format_raw_json(raw_json_string):
+    import re
+
+    # Remove asterisks (*) and other unwanted symbols
+    cleaned_text = raw_json_string.replace('\n', '<BR/>\n')
+    cleaned_text = re.sub(r"[*\-]", "", cleaned_text)  # Remove asterisks and dashes
+    cleaned_text = re.sub(r"\s{2,}", " ", cleaned_text)  # Remove extra spaces
+    cleaned_text = cleaned_text.strip()  # Remove leading and trailing spaces
+
+    # Replace newlines with <br /> tags for proper HTML formatting
+
+    return cleaned_text
+
+
+
+
+
 @app.route('/rag2', methods=['POST'])
 def rag2():
     try:
         # Parse input JSON
-        
         data = request.json
         top_diseases = data.get('top_diseases')
         question_answers = data.get('question_answers')
-        name = data.get("name")
-        age = data.get("age")
-        height = data.get("height")
-        weight = data.get("weight")
-        gender = data.get("gender")
+        name = data.get('name')
+        age = data.get('age')
+        gender = data.get('gender')
+        height = data.get('height')
+        weight = data.get('weight')
+        imagePath = data.get('image_path')
+        
         
         # Validate inputs
         if not isinstance(top_diseases, list) or not isinstance(question_answers, dict):
@@ -228,8 +265,44 @@ def rag2():
         # Extract raw_json_string from task_result
         raw_json_string = task_result.raw 
 
-        # Generate PDF with all required data
-        local_pdf_link = generate_pdf(name, height, gender, weight, raw_json_string)
+#         # Generate PDF with all required data
+#         raw_json_string = '''Fibrosis:
+# - Probability: 0.384
+# - Symptoms Analysis:
+#   - Sudden episodes of shortness of breath without physical activity: Common in fibrosis.
+#   - Increased difficulty breathing when lying down: Indicative of lung issues, including fibrosis.
+#   - Dry cough: Often associated with fibrotic changes in the lungs.       
+#   - Chest discomfort with deep breathing: Seen in fibrosis due to stiff lung tissue.
+#   - No changes in skin or lip color: Lack of this symptom does not rule out fibrosis.
+# - Certainty Level: Medium
+#   - Reasoning: The presence of classic symptoms such as dry cough, difficulty breathing during rest, and discomfort with deep breathing align with fibrosis. However, the absence of other significant symptoms like cyanosis (bluish skin or lips) prevents a high certainty designation.
+
+# Edema:
+# - Probability: 0.218
+# - Symptoms Analysis:
+#   - Difficulty breathing and cough: While present, these symptoms are less specific to edema without the context of other systemic signs.
+#   - Absence of skin or lip color change: Lack of cyanosis could be seen in early stages of edema but is not definitive.
+# - Certainty Level: Low
+#   - Reasoning: Given that pulmonary edema is typically characterized by acute symptoms like frothy pink sputum and very rapid onset of breathlessness often related to heart failure, the documented symptoms do not strongly suggest edema as the primary diagnosis without further cardiac symptoms or findings.
+
+# Infiltration:
+# - Probability: 0.199
+# - Symptoms Analysis:
+#   - Dry cough and difficulty breathing: These symptoms are common in various respiratory conditions, including infiltration.
+#   - No sputum production indicative of infection: Infiltration can be due to various causes, including infections, but clear sputum is not a direct indicator.
+#   - Wheezing and localized chest pain: Potential indicators of localized lung issues, including infiltration.
+# - Certainty Level: Low
+#   - Reasoning: The symptoms presented could suggest lung infiltration, especially when considering the occasional wheezing and localized chest pain. However, given the broad nature of these symptoms and their association with various pulmonary conditions, a low certainty level is most appropriate without further imaging or diagnostics specific to infiltration patterns on chest X-ray or CT.
+
+# *Summary and Recommendations:*
+# - *Fibrosis* is the most probable diagnosis given the symptom profile, meriting a *Medium certainty level*. Further diagnostic tests, such as high-resolution CT scans or lung function tests, would be crucial to confirm the presence and extent of fibrotic changes.
+# - *Edema* has a *Low certainty level* due to the lack of specific symptoms directly pointing towards pulmonary edema, such as orthopnea or paroxysmal nocturnal dyspnea, that would significantly elevate its probability. Cardiac evaluation may also be necessary due to its relationship with heart conditions.
+# - *Infiltration* is assigned a *Low certainty level* since, while some symptoms align, there's insufficient specificity in the symptomatology provided to confidently diagnose without additional evidence from imaging studies.
+
+# This refined analysis is crucial for guiding further diagnostic workups and ensuring accurate diagnosis and management for the patient.'''
+        print(raw_json_string)
+        raw_json_string = clean_and_format_raw_json(raw_json_string)
+        local_pdf_link = generate_pdf(name, age, height, gender, weight, raw_json_string, top_diseases, imagePath)
         
         # Get the URL of the PDF from S3
         pdf_link = get_pdf_link(local_pdf_link)

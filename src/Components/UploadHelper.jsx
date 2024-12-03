@@ -131,6 +131,7 @@ const UploadHelper = () => {
         return `${TEMP_DIR}/${fileName}`;
       };
       const filePath = generateFilePath(file.name);
+      console.log(filePath);
       const payload = {
         "top_diseases": highestProbablities,
         "name" : name,
