@@ -178,7 +178,7 @@ export default function LogInForm() {
               border: '2px solid #567350', // Green border
             }}
           >
-            <Typography variant="h5" component="h1" align="center" sx={{ mb: 2, color: '#e6f4e4' }}>
+            <Typography variant="h5" component="h1" align="center" sx={{ mb: 2, color: 'black' }}>
               User LogIn Form
             </Typography>
 
@@ -199,12 +199,12 @@ export default function LogInForm() {
                 '& input::placeholder': { color: 'white' } // Placeholder color
               }}
               InputLabelProps={{
-                style: { color: 'white' } // Label color
+                style: { color: 'black' } // Label color
               }}
               InputProps={{
-                style: { color: 'white' }, // Input text color
+                style: { color: 'black' }, // Input text color
                 inputProps: {
-                  style: { color: 'white' } // Placeholder color
+                  style: { color: 'black' } // Placeholder color
                 }
               }}
             />
@@ -226,12 +226,12 @@ export default function LogInForm() {
                 '& input::placeholder': { color: 'white' } // Placeholder color
               }}
               InputLabelProps={{
-                style: { color: 'white' } // Label color
+                style: { color: 'black' } // Label color
               }}
               InputProps={{
-                style: { color: 'white' }, // Input text color
+                style: { color: 'black' }, // Input text color
                 inputProps: {
-                  style: { color: 'white' } // Placeholder color
+                  style: { color: 'black' } // Placeholder color
                 }
               }}
             />
@@ -249,10 +249,10 @@ export default function LogInForm() {
               variant="contained"
               type="submit"
               sx={{
-                backgroundColor: '#567350', // Button background color
+                backgroundColor: '#53a8b6', // Button background color
                 color: '#e6f4e4', // Button text color
                 '&:hover': {
-                  backgroundColor: '#4a6d44' // Darker green on hover
+                  backgroundColor: '#5585b5' // Darker green on hover
                 }
               }}
             >

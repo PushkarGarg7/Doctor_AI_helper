@@ -196,9 +196,9 @@ def upload_image():
         # Generate disease probabilities and get questions for top 3 diseases
         probabilities_data = generate_disease_probabilities()
 
-        top_diseases = probabilities_data["disease_probabilities"]
+        top_diseases = probabilities_data["top_3_diseases"]
         # task_result = executeCrewTasks(top_diseases, age,gender)
-        
+        # print(task_result)
         response = {
             "disease_data": probabilities_data,
             # "task_result": task_result  # Add result from execute_tasks

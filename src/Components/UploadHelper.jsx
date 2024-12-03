@@ -256,30 +256,39 @@ const UploadHelper = () => {
         <Row gutter={[16, 16]}>
           {Object.entries(diseaseQuestions).map(([disease, questions]) => (
             <Col xs={24} key={disease}>
-              <h2 style={{ marginBottom: '8px', fontSize: '20px', color: '#333' }}>{disease}</h2> {/* Disease heading */}
-              {/* Map through questions and display each on a new line */}
+              <h2 style={{ marginBottom: '8px', fontSize: '20px', color: '#333' }}>
+                {disease}
+              </h2> {/* Disease heading */}
               {questions.map((question, index) => (
-                <Text key={index} style={{ display: 'block', marginBottom: '4px' }}>
-                  {question}
-                </Text>
+                <Row key={index} align="middle" style={{ marginBottom: '8px' }}>
+                  {/* Display the question */}
+                  <Col span={16}>
+                    <Text>{question}</Text>
+                  </Col>
+                  {/* Display the corresponding TextArea */}
+                  <Col span={8}>
+                    <TextArea
+                      placeholder="Type your response here"
+                      onChange={(e) =>
+                        handleResponseChange(disease, index, e.target.value) // Add index for question-specific response
+                      }
+                      value={responses[disease]?.[index] || ''} // Use index for the specific response
+                      rows={1}
+                      style={{
+                        width: '100%',
+                        borderRadius: '4px',
+                        border: '1px solid #d9d9d9',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+                        transition: 'border-color 0.2s',
+                      }}
+                    />
+                  </Col>
+                </Row>
               ))}
-              <TextArea
-                placeholder="Type your response here"
-                onChange={(e) => handleResponseChange(disease, e.target.value)} // Use disease name for response key
-                value={responses[disease] || ''}
-                rows={4}
-                style={{
-                  width: '80%',  // Decrease horizontal size of the textbox
-                  marginTop: 8,
-                  borderRadius: '4px',
-                  border: '1px solid #d9d9d9',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                  transition: 'border-color 0.2s',
-                }}
-              />
             </Col>
           ))}
-        </Row>  
+        </Row>
+
         <Button
           type="primary"
           onClick={handleSubmitResponses}
