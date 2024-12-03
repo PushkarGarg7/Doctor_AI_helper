@@ -1,0 +1,97 @@
+/* Global reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Custom Navbar Styling */
+.custom-navbar {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%; /* Dynamic width for smaller screens */
+    max-width: 1200px;
+    min-height: 7vh; /* Maintain minimum height */
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background: #9bd0f4; /* Slightly darker translucent background */
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    z-index: 1000;
+    padding: clamp(1vh, 2vh, 3vh) clamp(2vw, 4vw, 5vw); /* Dynamic padding */
+    box-shadow: 0 2px 5px #5eafe4;
+    margin-top: 1vh;
+    transition: background 0.3s ease, padding 0.3s ease;
+}
+
+/* Left content (logo or text) */
+.custom-nav-left {
+    margin-left: clamp(1vw, 2vw, 3vw); /* Dynamic margin */
+    text-align: right;
+}
+
+/* Navbar Logo */
+.nav-logo {
+    width: clamp(100px, 15vw, 150px); /* Responsive width */
+    padding-top: 1vh;
+    margin-top: -1vh; /* Adjust if needed */
+}
+
+/* Right content (links or icons) */
+.custom-nav-right {
+    margin-right: clamp(1vw, 2vw, 3vw); /* Dynamic margin */
+}
+
+/* Navigation Links Styling */
+.custom-nav-links {
+    display: flex;
+    gap: clamp(1vw, 2vw, 4vw); /* Dynamic gap */
+    list-style: none;
+    font-size: clamp(14px, 2vh, 20px); /* Responsive font size */
+    padding: 0;
+    margin: 0;
+    color: #23dc8c;
+}
+
+/* Link hover effect */
+.custom-nav-links li:hover {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+}
+
+/* Anchor tag styling */
+.custom-nav-links a {
+    color: #23dc8c;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .custom-navbar {
+        width: 95%; /* Increase width for smaller screens */
+        flex-direction: column; /* Stack elements vertically */
+        padding: clamp(1.5vh, 3vh, 5vh) clamp(3vw, 5vw, 8vw); /* Dynamic padding */
+    }
+
+    .custom-nav-links {
+        flex-direction: column;
+        gap: clamp(1vh, 2vh, 3vh); /* Dynamic gap between links */
+        font-size: clamp(12px, 4vh, 18px); /* Smaller font size for mobile */
+    }
+    
+    .custom-nav-left,
+    .custom-nav-right {
+        margin: clamp(0.5vh, 1vh, 2vh) 0; /* Adjust margins for stacked layout */
+    }
+}
+
+@media (min-width: 1200px) {
+    .custom-navbar {
+        width: 80%; /* Decrease width for larger screens */
+    }
+}

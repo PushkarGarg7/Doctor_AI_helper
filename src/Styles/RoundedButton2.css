@@ -1,0 +1,20 @@
+.rounded-button {
+    background-color: green;
+    color: white !important;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 30px; /* Rounded edges */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .rounded-button:hover {
+    background-color: darkgreen; /* Darker shade on hover */
+  }
+  
+  .rounded-button:disabled {
+    background-color: #bdbdbd; /* Disabled button color */
+    cursor: not-allowed;
+  }
+  
