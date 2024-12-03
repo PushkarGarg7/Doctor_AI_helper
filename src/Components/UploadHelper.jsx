@@ -21,6 +21,9 @@ const UploadHelper = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
+  const [name, setName] = useState('');
+  const [weight, setWeight] = useState('');
+  const [height, setHeight] = useState('');
   const [diseaseQuestions, setDiseaseQuestions] = useState({}); // Store questions from server response
   const [responses, setResponses] = useState({}); // Store user responses to questions
   const [mappedData, setMappedData] = useState([]);
@@ -45,6 +48,9 @@ const UploadHelper = () => {
     formData.append('file', file);
     formData.append('age', age);
     formData.append('gender', gender);
+    formData.append('weight', weight);
+    formData.append('height', height);
+    formData.append('name', name);
     try {
       const response = await axios.post('http://localhost:5000/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -76,13 +82,16 @@ const UploadHelper = () => {
   };
 
   // Function to handle response input change
-  const handleResponseChange = (questionIndex, value) => {
+  const handleResponseChange = (disease, questionIndex, value) => {
     setResponses((prevResponses) => ({
       ...prevResponses,
-      [questionIndex]: value,
+      [disease]: {
+        ...prevResponses[disease], // Preserve existing responses for the disease
+        [questionIndex]: value, // Update the specific question's response
+      },
     }));
   };
-
+  
   useEffect(() => {
     const newMappedData = diseases.map((name) => ({
       name,
@@ -201,12 +210,36 @@ const UploadHelper = () => {
                 Selected file: {file.name}
               </div>
             )}
+            <Form.Item label="Enter Your Name">
+              <Input
+                placeholder="Enter Name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Form.Item>
             <Form.Item label="Enter Your Age">
               <Input
                 placeholder="Enter age"
                 type="number"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
+              />
+            </Form.Item>
+            <Form.Item label="Enter Your Height (Cm)">
+              <Input
+                placeholder="Enter Height"
+                type="number"
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+              />
+            </Form.Item>
+            <Form.Item label="Enter Your Weight (Kg)">
+              <Input
+                placeholder="Enter Weight"
+                type="number"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
               />
             </Form.Item>
             <Form.Item label="Select Gender">
