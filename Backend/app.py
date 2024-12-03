@@ -28,6 +28,22 @@ diseases = [
 ]
 
 
+aws_access_key_id=os.getenv('AWS_ACCESS_KEY')
+aws_secret_access_key=os.getenv('AWS_SECRET_KEY')
+region_name=os.getenv('REGION_NAME')
+# BUCKET_NAME = os.getenv('BUCKET_NAME')
+
+from io import BytesIO
+from PyPDF2 import PdfReader
+import boto3
+from botocore.exceptions import NoCredentialsError
+import uuid
+s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
+                         aws_secret_access_key=aws_secret_access_key,
+                         region_name=region_name)
+
+BUCKET_NAME = os.getenv('BUCKET_NAME')
+
 
 # Questions associated with each disease
 disease_questions = {
@@ -98,7 +114,7 @@ disease_questions = {
     ]
 }
 
-MODEL_WEIGHTS_PATH = "C:\Abhinav\Abhinav\PEC\Major Project\model_weights.weights.h5"
+MODEL_WEIGHTS_PATH = r'C:\Users\Gaurav\Downloads\multi_disease_model.h5'
 model = load_model(MODEL_WEIGHTS_PATH)
 
 def format_predictions_to_dict(predictions, labels):
@@ -196,48 +212,113 @@ def rag1():
         return jsonify({"error": str(e)}), 500
 
 
-def generate_disease_probabilities():
+def generate_pdf(raw_json_string):
+    return
 
-    # Step 1: Randomly select three diseases for higher probabilities
-    selected_indices = np.random.choice(len(diseases), 3, replace=False)
-    selected_probabilities = np.random.uniform(0.2, 0.4, 3)
-    selected_probabilities /= selected_probabilities.sum()  # Normalize to sum to 1 within selected range
-    selected_probabilities *= 0.8  # Scale to make the sum of these three around 0.8
+def get_pdf_link(pdf):
+    unique_filename = f"{uuid.uuid4()}"
 
-    # Step 2: Assign these high probabilities to the selected diseases
-    probabilities = np.zeros(len(diseases))
-    for i, idx in enumerate(selected_indices):
-        probabilities[idx] = selected_probabilities[i]
+    try:
+        # Upload file to S3
+        pdf.seek(0)
+        s3.upload_fileobj(pdf, BUCKET_NAME, unique_filename, ExtraArgs={'ContentType': 'application/pdf'})
+        
+        # Construct the file URL
+        file_url = f"https://{BUCKET_NAME}.s3.{s3.meta.region_name}.amazonaws.com/{unique_filename}"
+        
+        return file_url
+    except NoCredentialsError:
+        return jsonify({'error': 'Credentials not available'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-    # Step 3: Calculate remaining probability for other diseases
-    remaining_prob = 1 - probabilities[selected_indices].sum()
-    remaining_indices = [i for i in range(len(diseases)) if i not in selected_indices]
 
-    # Step 4: Distribute remaining probability across other diseases with low but non-zero values
-    remaining_probabilities = np.random.uniform(0.01, 0.05, len(remaining_indices))
-    remaining_probabilities /= remaining_probabilities.sum()  # Normalize to sum to 1
-    remaining_probabilities *= remaining_prob  # Scale to the remaining probability
+@app.route('/rag2', methods=['POST'])
+def rag2():
+    try:
+        # Parse input JSON
+        data = request.json
+        top_diseases = data.get('top_diseases')
+        question_answers = data.get('question_answers')
+        # print(top_diseases)
+        # print("-------")
+        # print(question_answers)
+        # Validate inputs
+        if not isinstance(top_diseases, list) or not isinstance(question_answers, dict):
+            return jsonify({"error": "Invalid input format"}), 400
+        print(2)
+        # Call the function with provided data
+        task_result = executeCrewTasks2(top_diseases, question_answers)
+        print(3)
+        print(task_result)
+        raw_json_string = task_result.raw 
 
-    # Step 5: Assign these lower probabilities to the remaining diseases
-    for i, idx in enumerate(remaining_indices):
-        probabilities[idx] = remaining_probabilities[i]
+        pdf = generate_pdf(raw_json_string)
 
-    # Step 6: Trim probabilities to 3 decimal places and create dictionary
-    probabilities = np.round(probabilities, 3)
-    disease_probabilities = dict(zip(diseases, probabilities))
+        pdf_link = get_pdf_link(pdf)
+
+        return jsonify(pdf_link), 200
+        # print("--------")
+        # print(type(raw_json_string))
+        # print(raw_json_string) # Ensure 'raw' is the correct field
+
+
+
+        # # Parse the JSON string into a Python dictionary
+        # parsed_data = json.loads(raw_json_string)
+        # print("-------")
+        # print(parsed_data)
+        
+        # # Convert to JSON response (if using Flask, for example)
+        # return jsonify(parsed_data), 200
+        # return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# def generate_disease_probabilities():
+
+#     # Step 1: Randomly select three diseases for higher probabilities
+#     selected_indices = np.random.choice(len(diseases), 3, replace=False)
+#     selected_probabilities = np.random.uniform(0.2, 0.4, 3)
+#     selected_probabilities /= selected_probabilities.sum()  # Normalize to sum to 1 within selected range
+#     selected_probabilities *= 0.8  # Scale to make the sum of these three around 0.8
+
+#     # Step 2: Assign these high probabilities to the selected diseases
+#     probabilities = np.zeros(len(diseases))
+#     for i, idx in enumerate(selected_indices):
+#         probabilities[idx] = selected_probabilities[i]
+
+#     # Step 3: Calculate remaining probability for other diseases
+#     remaining_prob = 1 - probabilities[selected_indices].sum()
+#     remaining_indices = [i for i in range(len(diseases)) if i not in selected_indices]
+
+#     # Step 4: Distribute remaining probability across other diseases with low but non-zero values
+#     remaining_probabilities = np.random.uniform(0.01, 0.05, len(remaining_indices))
+#     remaining_probabilities /= remaining_probabilities.sum()  # Normalize to sum to 1
+#     remaining_probabilities *= remaining_prob  # Scale to the remaining probability
+
+#     # Step 5: Assign these lower probabilities to the remaining diseases
+#     for i, idx in enumerate(remaining_indices):
+#         probabilities[idx] = remaining_probabilities[i]
+
+#     # Step 6: Trim probabilities to 3 decimal places and create dictionary
+#     probabilities = np.round(probabilities, 3)
+#     disease_probabilities = dict(zip(diseases, probabilities))
 
     
-    # Get the top 3 diseases with the highest probabilities
-    top_3_diseases = sorted(disease_probabilities, key=disease_probabilities.get, reverse=True)[:3]
+#     # Get the top 3 diseases with the highest probabilities
+#     top_3_diseases = sorted(disease_probabilities, key=disease_probabilities.get, reverse=True)[:3]
     
-    # Prepare questions for the top 3 diseases if available in the questions dictionary
-    questions = {disease: disease_questions.get(disease, ["No specific questions available"]) for disease in top_3_diseases}
+#     # Prepare questions for the top 3 diseases if available in the questions dictionary
+#     questions = {disease: disease_questions.get(disease, ["No specific questions available"]) for disease in top_3_diseases}
     
-    return {
-        "disease_probabilities" : disease_probabilities,
-        "top_3_diseases" : top_3_diseases,
-        "questions" : questions
-    }
+#     return {
+#         "disease_probabilities" : disease_probabilities,
+#         "top_3_diseases" : top_3_diseases,
+#         "questions" : questions
+#     }
 
 # Forming the tech-focused crew with some enhanced configurations
 crew_1 = Crew(
@@ -271,6 +352,24 @@ def executeCrewTasks(top_diseases, age, gender):
     })
     return result
 
+
+def executeCrewTasks2(top_diseases, question_answer):
+    # data = request.json
+    # top_diseases = data.get("diseases", ["Atelectasis", "Consolidation", "Pneumonia"])
+    # age = data.get("age", 45)
+    # gender = data.get("gender", "male")
+    print(top_diseases, question_answer)
+    # Start the task execution process
+    diseases_str = ", ".join([f"{list(d.keys())[0]}: {list(d.values())[0]}" for d in top_diseases])
+
+    # Call crew_2.kickoff
+    result = crew_2.kickoff(inputs={
+        'diseases': diseases_str,
+        'question_answers': question_answer
+    })
+
+
+    return result
 
 # Configure upload folder and allowed extensions
 # UPLOAD_FOLDER = 'uploads'

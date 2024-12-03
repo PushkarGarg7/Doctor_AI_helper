@@ -105,11 +105,11 @@ if __name__ == "__main__":
 
 
   # Start the task execution process with the defined top 3 diseases, age, and gender
-  # result = crew_1.kickoff(inputs={
-  #     'diseases': ", ".join(top_diseases),  # Join the top diseases into a single string
-  #     'age': age,
-  #     'gender': gender
-  # })
+  result = crew_1.kickoff(inputs={
+      'diseases': ", ".join(top_diseases),  # Join the top diseases into a single string
+      'age': age,
+      'gender': gender
+  })
   result = crew_2.kickoff(inputs={
       'diseases': ", ".join(top_diseases),  # Join the top diseases into a single string
       'question_answers': question_answers

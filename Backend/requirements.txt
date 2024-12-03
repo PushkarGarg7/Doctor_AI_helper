@@ -1,3 +1,6 @@
 crewai
 crewai_tools
 load_dotenv
+flask
+flask_cors
+pymongo
