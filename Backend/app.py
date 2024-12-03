@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from pymongo.server_api import ServerApi
 from pymongo import MongoClient
 from crew import Crew, Process, symptom_agent, question_agent, symptom_task, questions_task, analysis_agent, analysis_task
+from cnn import load_model, predict
 import bcrypt
 
 app = Flask(__name__)
@@ -14,10 +15,9 @@ load_dotenv()
 CORS(app)  # Enable CORS for the Flask app
 mongo_uri = os.getenv('MONGO_URI')
 client = MongoClient(mongo_uri, server_api=ServerApi('1'))
-
-@app.route('/')
-def home():
-    return "Hello, Flask!"
+users_collection = client.myapp.users
+TEMP_DIR = './temp'
+os.makedirs(TEMP_DIR, exist_ok=True)
 
 # Full list of diseases
 diseases = [
@@ -25,7 +25,6 @@ diseases = [
     "Fibrosis", "Effusion", "Pneumonia", "Pleural_thickening", "Cardiomegaly", "Nodule Mass", "Hernia"
 ]
 
-users_collection = client.myapp.users
 
 
 # Questions associated with each disease
@@ -96,6 +95,75 @@ disease_questions = {
         "Have you noticed pain in your chest after heavy meals?"
     ]
 }
+
+MODEL_WEIGHTS_PATH = "C:\Abhinav\Abhinav\PEC\Major Project\model_weights.weights.h5"
+model = load_model(MODEL_WEIGHTS_PATH)
+
+def format_predictions_to_dict(predictions, labels):
+    predictions = predictions.flatten()
+    
+    formatted_predictions = {label: round(prob, 3) for label, prob in zip(labels, predictions)}
+    print(formatted_predictions)
+    # Convert formatted predictions (values) to numpy array
+    # formatted_predictions_array = np.array(list(formatted_predictions.values()))
+    
+    return formatted_predictions
+
+
+@app.route('/cnn', methods=['POST'])
+def CnnCall():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No image file found in the request'}), 400
+
+    # Save the uploaded file
+    image_file = request.files['file']
+    all_labels = np.array(['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion', 'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 'Pleural_Thickening', 'Pneumonia', 'Pneumothorax'])
+    image_filename = image_file.filename
+    image_path = os.path.join(TEMP_DIR, image_filename)
+    
+    try:
+        image_file.save(image_path)
+    except Exception as e:
+        return jsonify({'error': f"Failed to save the image. {str(e)}"}), 500
+    try:
+        # Get predictions
+        predictions = predict(model, image_path)
+        # print("-----")
+        # print(predictions, "HeLLO")
+        formatted_predictions = format_predictions_to_dict(predictions, all_labels)
+        print("-----")
+        print(formatted_predictions)
+        print("-----")
+        response = {"predictions": formatted_predictions}
+        return jsonify(formatted_predictions), 201
+    except:
+        return jsonify({"error": "Server Error"}), 500
+
+@app.route('/rag1', methods=['POST'])
+def rag1():
+    try:
+        # Get data from request
+        data = request.json
+        age = data.get('age')
+        gender = data.get('gender')
+        top_probabilities = data.get('top_probabilities')
+
+        if not all([age, gender, top_probabilities]):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Process the data (replace with actual logic for RAG model)
+        task_result = executeCrewTasks(top_probabilities, age,gender)
+        print(task_result)
+        rag_result = {
+            "top_diseases": top_probabilities,
+            "questions": ["Question 1", "Question 2", "Question 3"]
+        }
+
+        return jsonify(rag_result), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 def generate_disease_probabilities():
 
@@ -206,7 +274,7 @@ def upload_image():
 
         # Generate disease probabilities and get questions for top 3 diseases
         probabilities_data = generate_disease_probabilities()
-
+        print(probabilities_data["disease_probabilities"])
         top_diseases = probabilities_data["top_3_diseases"]
         # task_result = executeCrewTasks(top_diseases, age,gender)
         # print(task_result)
