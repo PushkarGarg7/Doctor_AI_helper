@@ -6,6 +6,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from pymongo.server_api import ServerApi
 from pymongo import MongoClient
+from crewai import Crew, Process
 from crew import Crew, Process, symptom_agent, question_agent, symptom_task, questions_task, analysis_agent, analysis_task
 from cnn import load_model, predict
 import bcrypt
@@ -18,6 +19,11 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 import random
 
+## For New Module for CBC Tools Analysis using Agents
+from tool1 import get_tools
+from agent1 import get_cbc_analysis_agent
+from task1 import get_cbc_analysis_task
+
 app = Flask(__name__)
 load_dotenv()
 CORS(app)  # Enable CORS for the Flask app
@@ -26,6 +32,9 @@ client = MongoClient(mongo_uri, server_api=ServerApi('1'))
 users_collection = client.myapp.users
 TEMP_DIR = './temp'
 os.makedirs(TEMP_DIR, exist_ok=True)
+
+CBC_RULE_CSV_PATH = "C:\\Abhinav\\Abhinav\\PEC\\Major Project\\Project\\Doctor_AI_helper\\Backend\\SampleCBC.pdf"  
+# CSV file with inference rules
 
 
 aws_access_key_id=os.getenv('AWS_ACCESS_KEY')
@@ -220,9 +229,6 @@ def get_pdf_link(local_pdf_path):
         return jsonify({'error': str(e)}), 500
 
 
-
-import re
-
 def clean_and_format_raw_json(raw_json_string):
     import re
 
@@ -235,8 +241,6 @@ def clean_and_format_raw_json(raw_json_string):
     # Replace newlines with <br /> tags for proper HTML formatting
 
     return cleaned_text
-
-
 
 
 
@@ -264,41 +268,6 @@ def rag2():
         
         # Extract raw_json_string from task_result
         raw_json_string = task_result.raw 
-
-#         # Generate PDF with all required data
-#         raw_json_string = '''Fibrosis:
-# - Probability: 0.384
-# - Symptoms Analysis:
-#   - Sudden episodes of shortness of breath without physical activity: Common in fibrosis.
-#   - Increased difficulty breathing when lying down: Indicative of lung issues, including fibrosis.
-#   - Dry cough: Often associated with fibrotic changes in the lungs.       
-#   - Chest discomfort with deep breathing: Seen in fibrosis due to stiff lung tissue.
-#   - No changes in skin or lip color: Lack of this symptom does not rule out fibrosis.
-# - Certainty Level: Medium
-#   - Reasoning: The presence of classic symptoms such as dry cough, difficulty breathing during rest, and discomfort with deep breathing align with fibrosis. However, the absence of other significant symptoms like cyanosis (bluish skin or lips) prevents a high certainty designation.
-
-# Edema:
-# - Probability: 0.218
-# - Symptoms Analysis:
-#   - Difficulty breathing and cough: While present, these symptoms are less specific to edema without the context of other systemic signs.
-#   - Absence of skin or lip color change: Lack of cyanosis could be seen in early stages of edema but is not definitive.
-# - Certainty Level: Low
-#   - Reasoning: Given that pulmonary edema is typically characterized by acute symptoms like frothy pink sputum and very rapid onset of breathlessness often related to heart failure, the documented symptoms do not strongly suggest edema as the primary diagnosis without further cardiac symptoms or findings.
-
-# Infiltration:
-# - Probability: 0.199
-# - Symptoms Analysis:
-#   - Dry cough and difficulty breathing: These symptoms are common in various respiratory conditions, including infiltration.
-#   - No sputum production indicative of infection: Infiltration can be due to various causes, including infections, but clear sputum is not a direct indicator.
-#   - Wheezing and localized chest pain: Potential indicators of localized lung issues, including infiltration.
-# - Certainty Level: Low
-#   - Reasoning: The symptoms presented could suggest lung infiltration, especially when considering the occasional wheezing and localized chest pain. However, given the broad nature of these symptoms and their association with various pulmonary conditions, a low certainty level is most appropriate without further imaging or diagnostics specific to infiltration patterns on chest X-ray or CT.
-
-# *Summary and Recommendations:*
-# - *Fibrosis* is the most probable diagnosis given the symptom profile, meriting a *Medium certainty level*. Further diagnostic tests, such as high-resolution CT scans or lung function tests, would be crucial to confirm the presence and extent of fibrotic changes.
-# - *Edema* has a *Low certainty level* due to the lack of specific symptoms directly pointing towards pulmonary edema, such as orthopnea or paroxysmal nocturnal dyspnea, that would significantly elevate its probability. Cardiac evaluation may also be necessary due to its relationship with heart conditions.
-# - *Infiltration* is assigned a *Low certainty level* since, while some symptoms align, there's insufficient specificity in the symptomatology provided to confidently diagnose without additional evidence from imaging studies.
-
 # This refined analysis is crucial for guiding further diagnostic workups and ensuring accurate diagnosis and management for the patient.'''
         print(raw_json_string)
         raw_json_string = clean_and_format_raw_json(raw_json_string)
@@ -406,6 +375,69 @@ def upload_image():
         return jsonify(response), 201
     else:
         return jsonify({"error": "File type not allowed"}), 400
+    
+    
+def executeCBCAgent(pdf_path):
+    # pass    
+    # Load tools
+    csv_tool, pdf_tool = get_tools(CBC_RULE_CSV_PATH, pdf_path)
+
+    # Create dynamic agent and task
+    agent = get_cbc_analysis_agent(pdf_tool=pdf_tool, csv_tool=csv_tool)
+    task = get_cbc_analysis_task(agent=agent, pdf_tool=pdf_tool, csv_tool=csv_tool)
+
+    # Create crew
+    crew = Crew(
+        agents=[agent],
+        tasks=[task],
+        process=Process.sequential,
+        verbose=True,
+        memory=True,
+        cache=True,
+        full_output=True
+    )
+
+    result = crew.kickoff()
+    return result
+
+## For CBC Agent    
+UPLOAD_FOLDER = 'CBC_Uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+
+
+@app.route("/analyze-cbc", methods=["POST"])
+def analyze_cbc():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    filename = secure_filename(file.filename)
+    pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(pdf_path)
+
+    try:
+        task_result = executeCBCAgent(pdf_path)
+        print(type(task_result))
+        print(task_result)
+        raw_json_string = task_result.raw  # Ensure 'raw' is the correct field
+    
+        # Remove unnecessary backticks or code block markers if present
+        if raw_json_string.startswith("```json") and raw_json_string.endswith("```"):
+            raw_json_string = raw_json_string[7:-3].strip()  # Remove ```json and ```
+
+        # Parse the JSON string into a Python dictionary
+        parsed_data = json.loads(raw_json_string)
+        print(parsed_data)
+        # Convert to JSON response (if using Flask, for example)
+        return jsonify(parsed_data), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500    
     
     
 

@@ -1,4 +1,6 @@
 from crewai_tools import CSVSearchTool, PDFSearchTool
 
-csv_tool = CSVSearchTool(csv='C:\PythonPersonal\MajorProject\Doctor_AI_helper\Backend\CBC_All_Conditions_Filtered.csv')
-pdf_tool = PDFSearchTool(pdf='C:\PythonPersonal\MajorProject\Doctor_AI_helper\Backend\SampleCBC.pdf')
+def get_tools(csv_path, pdf_path):
+    csv_tool = CSVSearchTool(csv=csv_path)
+    pdf_tool = PDFSearchTool(pdf=pdf_path)
+    return csv_tool, pdf_tool

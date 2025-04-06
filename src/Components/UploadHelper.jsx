@@ -15,7 +15,8 @@ const diseases = [
 ];
 
 const UploadHelper = () => {
-  const [file, setFile] = useState("");
+  const [xRayFile, setXrayFile] = useState("");
+  const [CBCFile, setCBCFile] = useState("");
   const [dynamicNumbers, setDynamicNumbers] = useState([]);
   const [collapsed, setCollapsed] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -32,49 +33,54 @@ const UploadHelper = () => {
 
 
   // Function to handle image upload with additional fields
-  const handleFileChange = (info) => {
+  const handleXrayFileChange = (info) => {
     if (info.file.status !== 'removed') {
       // Ensure the file is only set if status is not 'removed'
-      setFile(info.file.originFileObj || info.file);
+      setXrayFile(info.file.originFileObj || info.file);
+      console.log("Selected file:", info.file.originFileObj || info.file); // Debugging
+    }
+  };
+
+  // Function to handle image upload with additional fields
+  const handleCBCFileChange = (info) => {
+    if (info.file.status !== 'removed') {
+      // Ensure the file is only set if status is not 'removed'
+      setCBCFile(info.file.originFileObj || info.file);
       console.log("Selected file:", info.file.originFileObj || info.file); // Debugging
     }
   };
   
 
   const handleUpload = async () => {
-    if (!file) {
+    if (!xRayFile) {
       message.warning("Please complete all fields before submitting.");
       return;
     }
     // debugger;
     const formData = new FormData();
-    formData.append('file', file);
+    const CBCformData = new FormData();
+    formData.append('file', xRayFile);
     formData.append('age', age);
     formData.append('gender', gender);
     formData.append('weight', weight);
     formData.append('height', height);
     formData.append('name', name);
+    CBCformData.append('file', CBCFile);
+    let ragRequestData = {
+      "age" : age,
+      "gender" : gender,
+      "top_probabilities": []
+    };
     try {
       const response = await axios.post('http://localhost:5000/cnn', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log(response);
-      // setDynamicNumbers(response.data.predictions);
-      // if(response.status === 201){
-      //   message.success('File uploaded successfully!');
-      //   setTimeout(() => {
-      //     setDynamicNumbers(response.data.disease_data.disease_probabilities); // Update dynamic numbers from server response
-      //     // setDiseaseQuestions(response.data.disease_data.questions);
-      //   }, 1000);
-      // }
+
       if (response.status === 201) {
         const probabilities = response.data.predictions; // Assuming response contains probabilities array
         console.log(probabilities);
-        message.success('File uploaded successfully!');
-        // setTimeout(() => {
-        //   setDynamicNumbers(probabilities); // Update dynamic numbers from server response
-        //   // setDiseaseQuestions(response.data.disease_data.questions);
-        // }, 1000);
+        message.success('X-Ray File uploaded successfully!');
         setDynamicNumbers(probabilities);
   
         // Step 2: Extract top 3 probabilities with disease names
@@ -85,21 +91,32 @@ const UploadHelper = () => {
         .map(item => ({ [item.disease]: item.probability })); // Convert to key-value pairs
         console.log(topProbabilities)
         setHighestProbablities(topProbabilities)
-
-        // Step 3: Call /rag1 with age, gender, and top probabilities
-        const ragRequestData = {
-        age,
-        gender,
-        top_probabilities: topProbabilities
-        };
+        ragRequestData["top_probabilities"] = topProbabilities
         console.log(ragRequestData);
-        const ragResponse = await axios.post('http://localhost:5000/rag1', ragRequestData);
+        // Step 3: Call /rag1 with age, gender, and top probabilities
+        // const ragRequestData = {
+        // age,
+        // gender,
+        // top_probabilities: topProbabilities
+        // };
+      }
 
-        console.log(ragResponse);
-        if (ragResponse.status === 200) {
-          message.success('Data processed successfully!');
-          setDiseaseQuestions(ragResponse.data); // Update questions
-        }
+      // Running both APIs in parallel
+      const [CBC_Response, ragResponse] = await Promise.all([
+        axios.post('http://localhost:5000/analyze-cbc', CBCformData),
+        axios.post('http://localhost:5000/rag1', ragRequestData)
+      ]);
+
+      if (ragResponse.status === 200) {
+        message.success('Data processed successfully!');
+        console.log(ragResponse.data);
+        setDiseaseQuestions(ragResponse.data); // Update questions
+      }
+
+      if(CBC_Response.status === 200){
+        const responseData = response.data; // Assuming response contains probabilities array
+        console.log(responseData);
+        message.success('CBC File uploaded successfully!');
       }
 
     } catch (error) {
@@ -130,7 +147,7 @@ const UploadHelper = () => {
       const generateFilePath = (fileName) => {
         return `${TEMP_DIR}/${fileName}`;
       };
-      const filePath = generateFilePath(file.name);
+      const filePath = generateFilePath(xRayFile.name);
       console.log(filePath);
       const payload = {
         "top_diseases": highestProbablities,
@@ -197,19 +214,34 @@ const UploadHelper = () => {
       >
         <div style={{ padding: '16px', backgroundColor: '#f9fafb' }}>
           <Form layout="vertical">
-            <Form.Item label="Upload Image">
-            <Upload
-              beforeUpload={() => false}  // Prevents auto-upload
-              onChange={handleFileChange}  // Save file to state on change
-              showUploadList={false}       // Hide default file list
-              accept='image/*'
-            >
-              <Button icon={<UploadOutlined />}>Click to Upload</Button>
-            </Upload>
+            <Form.Item label="Upload Chest X-Ray Image">
+              <Upload
+                // beforeUpload={() => false}  // Prevent auto-upload to manage manually
+                onChange={handleXrayFileChange}  // Set the file to state on file change
+                showUploadList={false}       // Hide the default file list if not needed
+                accept="image/*"             // Accept only images (optional)
+              >
+                <Button icon={<UploadOutlined />}>Click to Upload</Button>
+              </Upload>
             </Form.Item>
-            {file && (
+            {xRayFile && (
               <div style={{ marginTop: '8px', fontWeight: 'bold', color: '#555' }}>
-                Selected file: {file.name}
+                Selected file: {xRayFile.name}
+              </div>
+            )}
+            <Form.Item label="Upload CBC Report PDF">
+              <Upload
+                // beforeUpload={() => false}  // Prevent auto-upload to manage manually
+                onChange={handleCBCFileChange}  // Set the file to state on file change
+                showUploadList={false}       // Hide the default file list if not needed
+                accept="application/pdf"             // Accept only images (optional)
+              >
+                <Button icon={<UploadOutlined />}>Click to Upload</Button>
+              </Upload>
+            </Form.Item>
+            {CBCFile && (
+              <div style={{ marginTop: '8px', fontWeight: 'bold', color: '#555' }}>
+                Selected file: {CBCFile.name}
               </div>
             )}
             <Form.Item label="Enter Your Age">
@@ -271,19 +303,34 @@ const UploadHelper = () => {
       >
         <div style={{ marginBottom: '24px' }}>
           <Form layout="vertical">
-            <Form.Item label="Upload Image">
+            <Form.Item label="Upload Chest X-Ray Image">
               <Upload
                 // beforeUpload={() => false}  // Prevent auto-upload to manage manually
-                onChange={handleFileChange}  // Set the file to state on file change
+                onChange={handleXrayFileChange}  // Set the file to state on file change
                 showUploadList={false}       // Hide the default file list if not needed
                 accept="image/*"             // Accept only images (optional)
               >
                 <Button icon={<UploadOutlined />}>Click to Upload</Button>
               </Upload>
             </Form.Item>
-            {file && (
+            {xRayFile && (
               <div style={{ marginTop: '8px', fontWeight: 'bold', color: '#555' }}>
-                Selected file: {file.name}
+                Selected file: {xRayFile.name}
+              </div>
+            )}
+            <Form.Item label="Upload CBC Report PDF">
+              <Upload
+                // beforeUpload={() => false}  // Prevent auto-upload to manage manually
+                onChange={handleCBCFileChange}  // Set the file to state on file change
+                showUploadList={false}       // Hide the default file list if not needed
+                accept="application/pdf"             // Accept only images (optional)
+              >
+                <Button icon={<UploadOutlined />}>Click to Upload</Button>
+              </Upload>
+            </Form.Item>
+            {CBCFile && (
+              <div style={{ marginTop: '8px', fontWeight: 'bold', color: '#555' }}>
+                Selected file: {CBCFile.name}
               </div>
             )}
             <Form.Item label="Enter Your Name">

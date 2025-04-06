@@ -14,7 +14,6 @@ import RoundedButton from './RoundedButton';
 import Gaurav from '../Assets/Gaurav.jpeg';
 import Abhinav from '../Assets/Abhinav.jpeg';
 import Pushkar from '../Assets/Pushkar.jpeg';
-import Chirag from '../Assets/Chirag.png';
 import Shaunak from '../Assets/shaunak.jpg';
 import Kanu from '../Assets/kanu.jpg';
 
@@ -22,7 +21,7 @@ const LandingPage = () => {
   const teamMembers = [
     {
       name: 'Shaunak Gupta',
-      role: 'Backend Developer',
+      role: 'AI Engineer',
       linkedIn: '#',
       github: '#',
       image: Shaunak,
@@ -30,7 +29,7 @@ const LandingPage = () => {
     },
     {
       name: 'Gaurav Goyal',
-      role: 'Dev-Ops Engineer',
+      role: 'BackEnd Engineer',
       linkedIn: '#',
       github: '#',
       image: Gaurav,
@@ -135,7 +134,7 @@ const LandingPage = () => {
 
       {/* Add the RoundedButton below the feature box */}
       <div style={{ marginBottom: '50px', textAlign: 'center' }}>
-        <RoundedButton routeLink="/upload" label="Try X-Ray Image Analysis" />
+        <RoundedButton routeLink="/rag" label="Try X-Ray Image Analysis" />
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '40px', marginBottom: '20px' }}>
@@ -170,13 +169,13 @@ const LandingPage = () => {
                   >
                     {member.role}
                   </Typography>
-                  <Typography
+                  {/* <Typography
                     variant="body2"
                     style={{ marginTop: '5px', textAlign: 'center' }}
                   >
                     {member.description}
                   </Typography>
-                  {/* Links for LinkedIn and GitHub */}
+                  Links for LinkedIn and GitHub */}
                   <div
                     style={{
                       marginTop: '10px',
