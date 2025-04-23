@@ -56,6 +56,10 @@ BUCKET_NAME = os.getenv('BUCKET_NAME')
 MODEL_WEIGHTS_PATH = "C:\Abhinav\Abhinav\PEC\Major Project\model_weights.weights.h5"
 model = load_model(MODEL_WEIGHTS_PATH)
 
+cbc_Data = {}
+global_cbc_storage = {}
+
+
 def format_predictions_to_dict(predictions, labels):
     predictions = predictions.flatten()
     
@@ -129,7 +133,7 @@ def rag1():
         return jsonify({"error": str(e)}), 500
 
 
-def generate_pdf(name, age, height, gender, weight, raw_json_string, top_diseases, xray_image_path="../img1.png"):
+def generate_pdf(name, age, height, gender, weight, raw_json_string, top_diseases, xray_image_path,cbc_data):
     pdf_path = "Preliminary_Report.pdf"
     pdf = SimpleDocTemplate(pdf_path, pagesize=letter)
     styles = getSampleStyleSheet()
@@ -203,6 +207,27 @@ def generate_pdf(name, age, height, gender, weight, raw_json_string, top_disease
         Spacer(1, 6),
     ] + raw_json_paragraphs  # Add JSON paragraphs with spacers
 
+    ## CBC Data
+    # CBC Data Insights Section
+    elements.append(Spacer(1, 24))
+    elements.append(Paragraph("Insights from CBC Data", heading_style))
+    elements.append(Spacer(1, 6))
+
+    # First key - assumed dictionary
+    cbc_abnormalities = cbc_data.get("highlighted_abnormalities", {})
+    for key, value in cbc_abnormalities.items():
+        elements.append(Paragraph(f"<b>{key}:</b> {value}", normal_style))
+        elements.append(Spacer(1, 4))
+
+    # Second key - assumed list
+    cbc_medical_conditions = cbc_data.get("potential_medical_conditions", [])
+    if cbc_medical_conditions:
+        elements.append(Spacer(1, 12))
+        elements.append(Paragraph("<b>Observations:</b>", normal_style))
+        for obs in cbc_medical_conditions:
+            elements.append(Paragraph(f"• {obs}", normal_style))
+            elements.append(Spacer(1, 4))
+
     pdf.build(elements)
     print(f"PDF generated: {pdf_path}")
     return pdf_path
@@ -271,7 +296,8 @@ def rag2():
 # This refined analysis is crucial for guiding further diagnostic workups and ensuring accurate diagnosis and management for the patient.'''
         print(raw_json_string)
         raw_json_string = clean_and_format_raw_json(raw_json_string)
-        local_pdf_link = generate_pdf(name, age, height, gender, weight, raw_json_string, top_diseases, imagePath)
+        CBC_Data = global_cbc_storage['cbc_data'] 
+        local_pdf_link = generate_pdf(name, age, height, gender, weight, raw_json_string, top_diseases, imagePath,cbc_data=CBC_Data)
         
         # Get the URL of the PDF from S3
         pdf_link = get_pdf_link(local_pdf_link)
@@ -432,14 +458,15 @@ def analyze_cbc():
 
         # Parse the JSON string into a Python dictionary
         parsed_data = json.loads(raw_json_string)
+        global_cbc_storage['cbc_data'] = parsed_data
+
         print(parsed_data)
         # Convert to JSON response (if using Flask, for example)
         return jsonify(parsed_data), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500    
-    
-    
+
 
 # User login
 @app.route("/login", methods=['POST'])

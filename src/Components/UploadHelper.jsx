@@ -93,12 +93,7 @@ const UploadHelper = () => {
         setHighestProbablities(topProbabilities)
         ragRequestData["top_probabilities"] = topProbabilities
         console.log(ragRequestData);
-        // Step 3: Call /rag1 with age, gender, and top probabilities
-        // const ragRequestData = {
-        // age,
-        // gender,
-        // top_probabilities: topProbabilities
-        // };
+
       }
 
       // Running both APIs in parallel
@@ -115,6 +110,7 @@ const UploadHelper = () => {
 
       if(CBC_Response.status === 200){
         const responseData = response.data; // Assuming response contains probabilities array
+        // localStorage.setItem('CBC_Data', JSON.stringify(responseData));
         console.log(responseData);
         message.success('CBC File uploaded successfully!');
       }

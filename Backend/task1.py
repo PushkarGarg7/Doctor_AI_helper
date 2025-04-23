@@ -8,9 +8,10 @@ def get_cbc_analysis_task(agent, pdf_tool, csv_tool):
             "Identify abnormalities in blood test results and infer potential conditions."
         ),
         expected_output=(
-            "A structured JSON object containing the extracted CBC parameters, "
-            "highlighted abnormalities, and a list of potential medical conditions inferred "
-            "from the reference dataset."
+            "A structured JSON object with the following keys:\n\n"
+            "1. extracted_CBC_parameters"
+            "2. highlighted_abnormalities"
+            "3. potential_medical_conditions"
         ),
         tools=[pdf_tool, csv_tool],
         agent=agent,
