@@ -34,7 +34,11 @@ TEMP_DIR = './temp'
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 
-CBC_RULE_CSV_PATH = "C:\\Abhinav\\Abhinav\\PEC\\Major Project\\Project\\Doctor_AI_helper\\Backend\\CBC_All_Conditions_Filtered.csv"
+CBC_RULE_CSV_PATH = os.getenv('CBC_RULE_CSV_PATH')
+MODEL_WEIGHTS_PATH = os.getenv('MODEL_WEIGHTS_PATH')
+
+
+# CBC_RULE_CSV_PATH = "C:\\Abhinav\\Abhinav\\PEC\\Major Project\\Project\\Doctor_AI_helper\\Backend\\CBC_All_Conditions_Filtered.csv"
 
 # CSV file with inference rules
 
@@ -55,7 +59,7 @@ s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
 
 BUCKET_NAME = os.getenv('BUCKET_NAME')
 
-MODEL_WEIGHTS_PATH = "C:\Abhinav\Abhinav\PEC\Major Project\model_weights.weights.h5"
+# MODEL_WEIGHTS_PATH = "C:\Abhinav\Abhinav\PEC\Major Project\model_weights.weights.h5"
 model = load_model(MODEL_WEIGHTS_PATH)
 
 cbc_Data = {}
