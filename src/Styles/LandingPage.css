@@ -4,7 +4,7 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #9bd0f4;
+  background-color: #7fc7f6;
   color: linear-gradient(to right, rgb(10, 10, 10), #000000);;
   /* Ensures all text is white */
   overflow-x: hidden;
@@ -19,7 +19,7 @@ body {
   align-items: center;
   height: calc(100vh - 20vh);
   /* Dynamic height based on viewport */
-  background-color: #9bd0f4;
+  background-color: #7fc7f6;
   text-align: center;
 }
 

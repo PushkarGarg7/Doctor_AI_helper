@@ -12,21 +12,21 @@ function Navbar() {
                     <li>
                         <RoundedButton
                             label="Home"
-                            style={{ backgroundColor: '#9bd0f4', color: 'white' }}
+                            style={{ backgroundColor: '#55b2ef', color: 'white' }}
                             onClick={() => scrollToSection('home')}
                         />
                     </li>
                     <li>
                         <RoundedButton
                             label="About"
-                            style={{ backgroundColor: '#9bd0f4', color: 'white' }}
+                            style={{ backgroundColor: '#55b2ef', color: 'white' }}
                             onClick={() => scrollToSection('about')}
                         />
                     </li>
                     <li>
                         <RoundedButton
                             label="Team"
-                            style={{ backgroundColor: '#9bd0f4', color: 'white' }}
+                            style={{ backgroundColor: '#55b2ef', color: 'white' }}
                             onClick={() => scrollToSection('team')}
                         />
                     </li>
@@ -34,10 +34,10 @@ function Navbar() {
             </div>
             <div className="custom-nav-right">
                 <ul className="custom-nav-links">
-                    <RoundedButton routeLink="/rag" label="X-Ray Analysis" style={{ backgroundColor: '#9bd0f4', color: 'white' }} />
+                    <RoundedButton routeLink="/rag" label="X-Ray Analysis" style={{ backgroundColor: '#55b2ef', color: 'white' }} />
 
-                    <RoundedButton routeLink="/login" label="LogIn" style={{ backgroundColor: '#9bd0f4', color: 'white' }} />
-                    <RoundedButton routeLink="/signUp" label="SignUp" style={{ backgroundColor: '#9bd0f4', color: 'black' }} />
+                    <RoundedButton routeLink="/login" label="LogIn" style={{ backgroundColor: '#55b2ef', color: 'white' }} />
+                    <RoundedButton routeLink="/signUp" label="SignUp" style={{ backgroundColor: '#55b2ef', color: 'black' }} />
                 
                 </ul>
             </div>

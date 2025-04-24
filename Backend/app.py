@@ -33,7 +33,9 @@ users_collection = client.myapp.users
 TEMP_DIR = './temp'
 os.makedirs(TEMP_DIR, exist_ok=True)
 
-CBC_RULE_CSV_PATH = "C:\\Abhinav\\Abhinav\\PEC\\Major Project\\Project\\Doctor_AI_helper\\Backend\\SampleCBC.pdf"  
+
+CBC_RULE_CSV_PATH = "C:\\Abhinav\\Abhinav\\PEC\\Major Project\\Project\\Doctor_AI_helper\\Backend\\CBC_All_Conditions_Filtered.csv"
+
 # CSV file with inference rules
 
 

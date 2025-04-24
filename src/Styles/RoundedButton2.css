@@ -1,5 +1,5 @@
 .rounded-button {
-    background-color: green;
+    background-color: #55b2ef;
     color: white !important;
     padding: 10px 20px;
     font-size: 16px;
@@ -10,7 +10,7 @@
   }
   
   .rounded-button:hover {
-    background-color: darkgreen; /* Darker shade on hover */
+    background-color: #77bae3; /* Darker shade on hover */
   }
   
   .rounded-button:disabled {

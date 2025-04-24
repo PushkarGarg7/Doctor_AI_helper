@@ -18,7 +18,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    background: #9bd0f4; /* Slightly darker translucent background */
+    background: #acd6f1; /* Slightly darker translucent background */
     backdrop-filter: blur(10px);
     border-radius: 15px;
     z-index: 1000;
