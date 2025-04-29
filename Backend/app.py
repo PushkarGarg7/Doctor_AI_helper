@@ -22,7 +22,7 @@ import random
 ## For New Module for CBC Tools Analysis using Agents
 from tool1 import get_tools
 from agent1 import get_cbc_analysis_agent
-from task1 import get_cbc_analysis_task
+from task1 import get_cbc_analysis_task, get_cbc_analysis_task2
 
 app = Flask(__name__)
 load_dotenv()
@@ -64,6 +64,7 @@ model = load_model(MODEL_WEIGHTS_PATH)
 
 cbc_Data = {}
 global_cbc_storage = {}
+global_disease_probablities = {}
 
 
 def format_predictions_to_dict(predictions, labels):
@@ -102,6 +103,9 @@ def CnnCall():
             # formatted_predictions[key] = float(formatted_predictions[key])
             formatted_predictions[key] = float(round(formatted_predictions[key], 3))
         response = {"predictions": formatted_predictions}
+        # Sort the dictionary by value in descending order and get the top 3
+        top_3_predictions = dict(sorted(formatted_predictions.items(), key=lambda item: item[1], reverse=True)[:3])
+        global_disease_probablities["top_diseases"] = top_3_predictions
         return jsonify(response), 201
     except:
         return jsonify({"error": "Server Error"}), 500
@@ -117,7 +121,7 @@ def rag1():
 
         if not all([age, gender, top_probabilities]):
             return jsonify({"error": "Missing required fields"}), 400
-      
+        print("I have these top Probablities")
         print(top_probabilities)
         # Process the data (replace with actual logic for RAG model)
         task_result = executeCrewTasks(top_probabilities, age,gender)
@@ -397,6 +401,7 @@ def upload_image():
         probabilities_data = generate_disease_probabilities()
         print(probabilities_data["disease_probabilities"])
         top_diseases = probabilities_data["top_3_diseases"]
+        print(top_diseases)
         # task_result = executeCrewTasks(top_diseases, age,gender)
         # print(task_result)
         response = {
@@ -415,8 +420,9 @@ def executeCBCAgent(pdf_path):
     csv_tool, pdf_tool = get_tools(CBC_RULE_CSV_PATH, pdf_path)
 
     # Create dynamic agent and task
+    top_diseases = global_disease_probablities["top_diseases"]
     agent = get_cbc_analysis_agent(pdf_tool=pdf_tool, csv_tool=csv_tool)
-    task = get_cbc_analysis_task(agent=agent, pdf_tool=pdf_tool, csv_tool=csv_tool)
+    task = get_cbc_analysis_task2(agent=agent, pdf_tool=pdf_tool, csv_tool=csv_tool,top_diseases=top_diseases)
 
     # Create crew
     crew = Crew(
