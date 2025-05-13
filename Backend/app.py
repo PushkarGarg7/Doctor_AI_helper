@@ -182,8 +182,10 @@ def CnnCall2():
         for key in formatted_predictions:
             formatted_predictions[key] = float(round(formatted_predictions[key], 3))
 
-        # Create response and extract top 3 predictions
-        response = {"predictions": formatted_predictions, "positive_diseases" : positive_diseases}
+        positive_predictions = {
+            disease: formatted_predictions[disease]
+            for disease in positive_diseases
+        }
         
         top_3_predictions = dict(sorted(
             formatted_predictions.items(),
@@ -192,8 +194,11 @@ def CnnCall2():
         )[:3])
 
         # Save top diseases to global state for use in other modules
-        global_disease_probablities["top_diseases"] = top_3_predictions
-
+        global_disease_probablities["top_diseases"] = positive_predictions
+        
+        # Create response and extract top 3 predictions
+        response = {"predictions": formatted_predictions, "positive_diseases" : positive_diseases, "positive_predictions" : positive_predictions, "top_probabilities" : top_3_predictions}
+        
         return jsonify(response), 201
 
     except:
