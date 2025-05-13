@@ -36,7 +36,7 @@ import openai
 # === CBC Agent Tools and Tasks ===
 from tool1 import get_tools
 from agent1 import get_cbc_analysis_agent
-from task1 import get_cbc_analysis_task, get_cbc_analysis_task2
+from task1 import get_cbc_analysis_task
 
 # === Flask App and Config ===
 app = Flask(__name__)
@@ -417,7 +417,7 @@ def executeCBCAgent(pdf_path):
 
     # Instantiate CBC analysis agent and its associated task
     agent = get_cbc_analysis_agent(pdf_tool=pdf_tool, csv_tool=csv_tool)
-    task = get_cbc_analysis_task2(agent=agent, pdf_tool=pdf_tool, csv_tool=csv_tool, top_diseases=top_diseases)
+    task = get_cbc_analysis_task(agent=agent, pdf_tool=pdf_tool, csv_tool=csv_tool, top_diseases=top_diseases)
 
     # Create a Crew with the CBC agent and task, set to run sequentially with caching and memory
     crew = Crew(
