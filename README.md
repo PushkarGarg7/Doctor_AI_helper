@@ -105,3 +105,39 @@ npm run dev
 - **Interactive Frontend**: User-friendly interface for uploading files and viewing results.
 - **Detailed Reports**: Automatically generated diagnostic reports with key insights.
 - **Customizable**: Easily extendable for additional features or integrations.
+
+---
+
+## 🤖 Model Setup
+
+1. **Download the model and weights files**  
+   Place the model and its weight files **outside** the `Doctor_AI_helper/` directory, for example:
+
+   ```
+   /models/
+   ├── model.h5
+   └── model_weights.h5
+
+   ```
+
+2. **Update the `.env` file**  
+   Add the following entries to your `.env` file to provide paths to the model and weights:
+
+   ```env
+   MODEL_PATH=/models/model.h5
+   MODEL_WEIGHTS_PATH=/models/model_weights.h5
+   ```
+
+   Ensure these paths are absolute or relative to where the backend expects to load the files.
+
+3. **Use in Backend**  
+   In your Flask backend code, you can load them like this:
+
+   ```python
+   import os
+   MODEL_PATH = os.getenv("MODEL_PATH")
+   MODEL_WEIGHTS_PATH = os.getenv("MODEL_WEIGHTS_PATH")
+   ```
+
+---
+
