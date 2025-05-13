@@ -1,50 +1,96 @@
-import tensorflow as tf
-from tensorflow import keras
 import numpy as np
-from keras.preprocessing.image import load_img, img_to_array
-from keras.applications.mobilenet import MobileNet
-from keras.layers import GlobalAveragePooling2D, Dense, Dropout
-from keras.models import Sequential
+import pandas as pd
+import tensorflow as tf
+from keras.applications.densenet import DenseNet121
+from keras.layers import Dense, GlobalAveragePooling2D
+from keras.models import Model
+from tensorflow.keras.utils import load_img, img_to_array
+from dotenv import load_dotenv
+import os 
 
-# Define labels
-all_labels = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion',
-              'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass', 
-              'Nodule', 'Pleural_Thickening', 'Pneumonia', 'Pneumothorax']
+# ------------------------
+# CONSTANTS
+# ------------------------
+IMAGE_SIZE = (320, 320)
 
-# Function to create the model
-def make_model():
-    base_mobilenet_model = MobileNet(input_shape=(512, 512, 1), include_top=False, weights=None)
-    model = Sequential([
-        base_mobilenet_model,
-        # GlobalAveragePooling2D(),
-        Dropout(0.5),
-        Dense(512),
-        Dropout(0.5),
-        Dense(len(all_labels), activation='sigmoid')
-    ])
+LABELS = [
+    'Cardiomegaly', 'Emphysema', 'Effusion', 'Hernia', 'Infiltration', 
+    'Mass', 'Nodule', 'Atelectasis', 'Pneumothorax', 'Pleural_Thickening', 
+    'Pneumonia', 'Fibrosis', 'Edema', 'Consolidation'
+]
+
+THRESHOLDS = np.array([
+    0.519135, 0.540763, 0.478758, 0.465557, 0.529498,
+    0.474119, 0.481894, 0.509495, 0.480846, 0.45797,
+    0.61158, 0.420276, 0.496351, 0.560865
+])
+
+DENSENET_PATH = os.getenv('DENSENET_PATH')
+WEIGHTS_PATH = os.getenv('WEIGHTS_PATH')
+
+# ------------------------
+# MODEL LOADING
+# ------------------------
+
+def load_densenet_model():
+    base_model = DenseNet121(weights=DENSENET_PATH, include_top=False)
+    x = GlobalAveragePooling2D()(base_model.output)
+    predictions = Dense(len(LABELS), activation="sigmoid")(x)
+    model = Model(inputs=base_model.input, outputs=predictions)
+    model.load_weights(WEIGHTS_PATH)
     return model
 
-# Function to load model with weights
-def load_model(weights_path):
-    model = make_model()
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001), 
-                  loss='binary_crossentropy', 
-                  metrics=[tf.keras.metrics.AUC(multi_label=True)])
-    model.load_weights(weights_path)
-    return model
+# Load model once
+model = load_densenet_model()
 
-# Function to preprocess the image
-def preprocess_image(image_path):
-    IMG_SIZE = (512, 512)
-    img = load_img(image_path, target_size=IMG_SIZE, color_mode='grayscale')
-    img_array = img_to_array(img)
-    img_array = (img_array - np.mean(img_array)) / (np.std(img_array) + 1e-7)
+# ------------------------
+# IMAGE PREDICTION
+# ------------------------
+
+def predict_disease_probabilities(img_path):
+    """
+    Loads an image and returns predicted probabilities from the model.
+    
+    Args:
+        img_path (str): path to the image file
+        
+    Returns:
+        np.ndarray: shape (1, 14) probability scores for each label
+    """
+    img = load_img(img_path, target_size=IMAGE_SIZE)
+    img_array = img_to_array(img) / 255.0  # normalize
     img_array = np.expand_dims(img_array, axis=0)
-    return img_array
+    
+    predicted_vals = model.predict(img_array)
+    prob_array = np.array(predicted_vals).flatten()
+    arr = prob_array.tolist()
+    return arr
 
-# Function to predict probabilities
-def predict(model, image_path):
-    img_array = preprocess_image(image_path)
-    predicted_probs = model.predict(img_array)
-    # print(predicted_probs)
-    return predicted_probs
+# ------------------------
+# DISEASE FILTERING
+# ------------------------
+
+def get_diseases_above_threshold(prob_array):
+    """
+    Returns list of diseases with predicted prob > threshold
+    
+    Args:
+        prob_array (np.ndarray): shape (1, 14)
+    
+    Returns:
+        List[str]: disease names with prob > threshold
+    """
+    prob_array = np.array(prob_array).flatten()
+    assert prob_array.shape[0] == len(THRESHOLDS), "Prediction size mismatch"
+    
+    return [LABELS[i] for i in range(len(LABELS)) if prob_array[i] > THRESHOLDS[i]]
+
+
+if __name__ == "__main__":
+    img_path = "C:\\Abhinav\\Abhinav\\PEC\\Major Project\\Project\\img5.png"
+    
+    probs = predict_disease_probabilities(img_path)
+    print("Predicted Probabilities:\n", probs)
+    
+    positive_diseases = get_diseases_above_threshold(probs)
+    print("Diseases above threshold:\n", positive_diseases)

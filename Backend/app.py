@@ -15,8 +15,7 @@ from crewai import Crew, Process
 from crew import Crew, Process, symptom_agent, question_agent, symptom_task, questions_task, analysis_agent, analysis_task
 
 # === CNN Model for Prediction ===
-from cnn import load_model, predict
-from cnn2 import predict_disease_probabilities, get_diseases_above_threshold
+from cnn import predict_disease_probabilities, get_diseases_above_threshold
 
 # === Utilities: Auth, JSON, Regex ===
 import bcrypt
@@ -73,73 +72,11 @@ s3 = boto3.client('s3', aws_access_key_id=aws_access_key_id,
                          region_name=region_name)
 BUCKET_NAME = os.getenv('BUCKET_NAME')
 
-# === Load CNN Model ===
-model = load_model(MODEL_WEIGHTS_PATH)
 
 # === Global Variables for CBC Analysis State ===
 cbc_Data = {}
 global_cbc_storage = {}
 global_disease_probablities = {}
-
-
-# def openaiChatOutput2():
-#     disease_probablities={"Infiltration" : 33.00,"Effusion": 15.80,"Atelectasis" : 9.30}
-#     disease_summary = ", ".join([f"{k} with probability ({v:.3f})" for k, v in disease_probablities.items()])
-
-#      # Load extracted CBC values from PDF (already parsed in your system)
-#     cbc_values = "Hemoglobin: 12.5 g/dL (Low), RBC Count: 5.2 mill/cumm, PCV: 57.5% (High), MCV: 87.75 fL, MCH: 27.2 pg, MCHC: 32.8 g/dL, RDW: 13.6%, WBC Count: 9000/cumm, Neutrophils: 60%, Lymphocytes: 31%, Eosinophils: 1%, Monocytes: 7%, Basophils: 1%, Platelet Count: 450000/cumm (High)"
-
-#     # Top diseases and probabilities
-
-#     # Build the user prompt
-#     csv_summary = "Elevated white blood cell (WBC) count, known as leukocytosis, indicates infection or inflammation and is commonly observed in lung diseases such as pneumonia, lung cancer, and granulomatous infections. Neutrophilia, or an increase in neutrophils, suggests bacterial infection or inflammation, often seen in lung infections and nodule formation. Lymphopenia, characterized by a low lymphocyte count, is associated with advanced lung cancer and reflects disease progression and immune suppression. Anemia, indicated by reduced red blood cells or hemoglobin, is frequently found in lung cancer patients due to chronic disease, blood loss, or bone marrow suppression. Thrombocytosis, or elevated platelet count, acts as a paraneoplastic marker in lung cancer and points to systemic inflammation, while thrombocytopenia (low platelet count) may occur in advanced lung cancer, especially with bone marrow involvement or disseminated intravascular coagulation (DIC).An elevated red cell distribution width (RDW) reflects variation in RBC size and is linked to poor prognosis in lung cancer and severe COPD. Polycythemia, or increased red blood cell count, occurs due to chronic hypoxia and is typical in COPD and emphysema as the body compensates for low oxygen levels. Altered hemoglobin levels affect oxygen-carrying capacity and are commonly seen in COPD and lung cancer. Elevated hematocrit indicates increased RBC volume and is also seen in chronic lung diseases due to hypoxia. A high neutrophil-to-lymphocyte ratio (NLR) serves as an inflammatory marker and is significantly elevated in asthma, COPD, and lung infections, correlating with disease severity. Monocytosis, or elevated monocyte count, appears in chronic inflammatory lung conditions like tuberculosis. Lymphocytosis, or increased lymphocytes, may point to chronic infections such as TB or pertussis. Neutropenia, a reduction in neutrophils, is observed in viral lung infections or due to drug-induced immunosuppression.Additionally, elevated ESR (erythrocyte sedimentation rate) is a nonspecific marker of inflammation and is raised in TB, pneumonia, and chronic lung disease exacerbations. High CRP (C-reactive protein) levels indicate acute-phase inflammation and are common in pneumonia, TB, and COPD flare-ups. Bandemia, or the presence of immature neutrophils, is seen in severe bacterial pneumonia. Eosinophilia, or increased eosinophils, is a key indicator in allergic asthma and eosinophilic lung diseases, while eosinopenia (low eosinophils) may occur in severe infections or with corticosteroid use. Lastly, basophilia, though rare, can be present in allergic pulmonary reactions."
-
-#     disease_summary = ", ".join([f"{k} with probability ({v:.3f})" for k, v in global_disease_probablities.items()])
-
-#     user_prompt = f"""
-#     You are a clinical assistant analyzing CBC reports.
-#     Here are the patient's CBC values:
-#     {cbc_values}
-#     Below are the known symptom inference rules from medical literature:
-#     {csv_summary}
-#     Analyze these CBC values against the inference rules. Then, based on the following diseases and their probabilities:
-#     {disease_summary}
-
-#     Output a JSON object with:
-#     1. extracted_CBC_parameters – the values above.
-#     2. highlighted_abnormalities – only the ones outside normal range.
-#     3. potential_medical_conditions – inferred conditions from symptoms.
-#     4. top_disease_likelihoods – for each top disease, explain its relevance based on CBC symptoms don't say no inference always write a reference from that cbc report'
-#     """
-
-#     # System prompt
-#     system_prompt = "You are a helpful medical assistant that returns structured analysis in JSON format."
-
-#     # Send to OpenAI API
-#     response = openai.chat.completions.create(
-#         model="gpt-4o",
-#         messages=[
-#             {"role": "system", "content": system_prompt},
-#             {"role": "user", "content": user_prompt}
-#         ],
-#         temperature=0.5
-#     )
-
-#     # Extract and display result
-#     output = response.choices[0].message.content
-#     print(output)
-
-#     raw_json_string = output
-    
-#     if raw_json_string.startswith("```json") and raw_json_string.endswith("```"):
-#         raw_json_string = raw_json_string[7:-3].strip()  # Remove ```json and ```
-
-#     # Parse the JSON string into a Python dictionary
-#     parsed_data = json.loads(raw_json_string)
-#     global_cbc_storage['new_cbc_data'] = parsed_data
-
-#     print(parsed_data)
-#     return parsed_data
 
 # === Helper Function to Format CNN Predictions ===
 def format_predictions_to_dict(predictions, labels):
@@ -149,7 +86,7 @@ def format_predictions_to_dict(predictions, labels):
     return formatted_predictions
 
 # === CNN Endpoint for X-ray Image Analysis ===
-@app.route('/cnn2', methods=['POST'])
+@app.route('/cnn', methods=['POST'])
 def CnnCall2():
     if 'file' not in request.files:
             return jsonify({'error': 'No image file found in the request'}), 400
@@ -205,56 +142,6 @@ def CnnCall2():
         # Fallback for unexpected server-side errors
         return jsonify({"error": "Server Error"}), 500
 
-
-# === CNN Endpoint for X-ray Image Analysis ===
-@app.route('/cnn', methods=['POST'])
-def CnnCall():
-    # Validate if image file is present in the request
-    if 'file' not in request.files:
-        return jsonify({'error': 'No image file found in the request'}), 400
-
-    # Define possible disease labels and prepare image path
-    image_file = request.files['file']
-    all_labels = np.array([
-        'Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Effusion',
-        'Emphysema', 'Fibrosis', 'Hernia', 'Infiltration', 'Mass',
-        'Nodule', 'Pleural_Thickening', 'Pneumonia', 'Pneumothorax'
-    ])
-    image_filename = image_file.filename
-    image_path = os.path.join(TEMP_DIR, image_filename)
-
-    try:
-        image_file.save(image_path)  # Save uploaded image to temp directory
-    except Exception as e:
-        return jsonify({'error': f"Failed to save the image. {str(e)}"}), 500
-
-    try:
-        # Run CNN model to get predictions
-        predictions = predict(model, image_path)
-
-        # Format predictions as a readable dictionary
-        formatted_predictions = format_predictions_to_dict(predictions, all_labels)
-
-        # Ensure all values are floats with 3 decimal precision
-        for key in formatted_predictions:
-            formatted_predictions[key] = float(round(formatted_predictions[key], 3))
-
-        # Create response and extract top 3 predictions
-        response = {"predictions": formatted_predictions}
-        top_3_predictions = dict(sorted(
-            formatted_predictions.items(),
-            key=lambda item: item[1],
-            reverse=True
-        )[:3])
-
-        # Save top diseases to global state for use in other modules
-        global_disease_probablities["top_diseases"] = top_3_predictions
-
-        return jsonify(response), 201
-
-    except:
-        # Fallback for unexpected server-side errors
-        return jsonify({"error": "Server Error"}), 500
 
 # === Endpoint to Perform Agent based Reasoning on Top Disease Probabilities ===
 @app.route('/rag1', methods=['POST'])
