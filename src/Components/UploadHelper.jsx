@@ -10,13 +10,17 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const diseases = [
-  "Atelectasis","Consolidation","Infiltration", "Pneumothorax","Edema", "Emphysema", "Fibrosis", 
-  "Effusion", "Pneumonia", "Pleural_thickening","Cardiomegaly", "Nodule Mass", "Hernia"
-];
+'Cardiomegaly', 'Emphysema', 'Effusion', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 'Atelectasis', 
+'Pneumothorax', 'Pleural_Thickening', 'Pneumonia', 'Fibrosis', 'Edema', 'Consolidation'];
 
+const thresholds = [
+  0.519135, 0.540763, 0.478758, 0.465557, 0.529498, 0.474119, 0.481894, 0.509495, 
+  0.480846, 0.45797,0.61158, 0.420276, 0.496351, 0.560865];
+    
 const UploadHelper = () => {
   const [xRayFile, setXrayFile] = useState("");
   const [CBCFile, setCBCFile] = useState("");
+  const [threshDiseases, setThreshDiseases] = useState([]);
   const [dynamicNumbers, setDynamicNumbers] = useState([]);
   const [collapsed, setCollapsed] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -72,16 +76,23 @@ const UploadHelper = () => {
       "top_probabilities": []
     };
     try {
-      const response = await axios.post('http://localhost:5000/cnn', formData, {
+      const response = await axios.post('http://localhost:5000/cnn2', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log(response);
+
+      // const newCBCresponse = await axios.get('http://localhost:5000/openaicbc', {
+      //   headers: { 'Content-Type': 'multipart/form-data' },
+      // });
+      // console.log(newCBCresponse);
       
       if (response.status === 201) {
         const probabilities = response.data.predictions; // Assuming response contains probabilities array
+        const positiveDisease = response.data.positive_diseases;
         console.log(probabilities);
         message.success('X-Ray File uploaded successfully!');
         setDynamicNumbers(probabilities);
+        setThreshDiseases(positiveDisease);
   
         // Step 2: Extract top 3 probabilities with disease names
         const topProbabilities = Object.entries(probabilities) // Convert object to array of [key, value] pairs
@@ -181,13 +192,15 @@ const UploadHelper = () => {
     }));
   };
   
+
   useEffect(() => {
-    const newMappedData = diseases.map((name) => ({
+    const newMappedData = diseases.map((name, index) => ({
       name,
       number: dynamicNumbers[name] || '-',
+      threshold: thresholds[index],
     }));
     setMappedData(newMappedData);
-  }, [dynamicNumbers]); // Dependency on dynamicNumbers to trigger re-computation
+  }, [dynamicNumbers]);
 
 
 
@@ -270,7 +283,7 @@ const UploadHelper = () => {
             </Form.Item>
           </Form>
           <h3 style={{ textAlign: 'center' }}>Disease Probablities</h3>
-          <List
+          {/* <List
             dataSource={mappedData}
             renderItem={(item) => (
               <List.Item>
@@ -278,7 +291,34 @@ const UploadHelper = () => {
                 <Text style={{ float: 'right', fontWeight: 'bold' }}>{item.number}</Text>
               </List.Item>
             )}
+          /> */}
+          <List
+            header={
+              <div style={{ display: 'flex', fontWeight: 'bold' }}>
+                <div style={{ flex: 1 }}>Disease</div>
+                <div style={{ flex: 1 }}>Threshold</div>
+                <div style={{ flex: 1 }}>Probability</div>
+              </div>
+            }
+            dataSource={mappedData}
+            renderItem={(item) => {
+              const isHighlighted = threshDiseases.includes(item.name);
+              return (
+                <List.Item
+                  style={{
+                    backgroundColor: isHighlighted ? '#ffcccc' : 'transparent', // light red
+                    padding: '8px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  <div style={{ flex: 1, fontWeight: 500 }}>{item.name}</div>
+                  <div style={{ width: 100, textAlign: 'right' }}>{item.threshold.toFixed(3)}</div>
+                  <div style={{ width: 100, textAlign: 'right', fontWeight: 'bold' }}>{item.number}</div>
+                </List.Item>
+              );
+            }}
           />
+
         </div>
       </Drawer>
 
@@ -384,7 +424,7 @@ const UploadHelper = () => {
           </Form>
         </div>
         <h3 style={{ textAlign: 'center' }}>Disease Probablities</h3>
-        <List
+        {/* <List
           dataSource={mappedData}
           renderItem={(item) => (
             <List.Item>
@@ -392,9 +432,34 @@ const UploadHelper = () => {
               <Text style={{ float: 'right', fontWeight: 'bold' }}>{item.number}</Text>
             </List.Item>
           )}
+        /> */}
+        <List
+          header={
+            <div style={{ display: 'flex', fontWeight: 'bold' }}>
+              <div style={{ flex: 1 }}>Disease</div>
+              <div style={{ flex: 1 }}>Threshold</div>
+              <div style={{ flex: 1 }}>Probability</div>
+            </div>
+          }
+          dataSource={mappedData}
+          renderItem={(item) => {
+            const isHighlighted = threshDiseases.includes(item.name);
+            return (
+              <List.Item
+                style={{
+                  backgroundColor: isHighlighted ? '#ffcccc' : 'transparent', // light red
+                  padding: '8px',
+                  borderRadius: '4px',
+                }}
+              >
+                <div style={{ flex: 1, fontWeight: 500 }}>{item.name}</div>
+                <div style={{ width: 100, textAlign: 'right' }}>{item.threshold.toFixed(3)}</div>
+                <div style={{ width: 100, textAlign: 'right', fontWeight: 'bold' }}>{item.number}</div>
+              </List.Item>
+            );
+          }}
         />
       </Sider>
-
       <Layout>
         <Content
           style={{

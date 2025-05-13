@@ -4,3 +4,15 @@ load_dotenv
 flask
 flask_cors
 pymongo
+tensorflow
+numpy 
+pandas
+werkzeug
+pymongo
+bcrypt
+reportlab
+openai
+PyPDF2
+boto3
+botocore
+uuid

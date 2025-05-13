@@ -1,6 +1,7 @@
 import tensorflow as tf
+from tensorflow import keras
 import numpy as np
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from keras.preprocessing.image import load_img, img_to_array
 from keras.applications.mobilenet import MobileNet
 from keras.layers import GlobalAveragePooling2D, Dense, Dropout
 from keras.models import Sequential
@@ -15,7 +16,7 @@ def make_model():
     base_mobilenet_model = MobileNet(input_shape=(512, 512, 1), include_top=False, weights=None)
     model = Sequential([
         base_mobilenet_model,
-        GlobalAveragePooling2D(),
+        # GlobalAveragePooling2D(),
         Dropout(0.5),
         Dense(512),
         Dropout(0.5),
