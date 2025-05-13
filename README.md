@@ -1,28 +1,27 @@
-```markdown
-# 🌟 **Doctor AI Helper** 🌟
+# 🌟 Doctor AI Helper 🌟
 
 Doctor AI Helper is a **web application** designed to assist in **medical diagnostics** by analyzing **CBC reports** and **X-ray images**. It leverages **AI models** to provide detailed insights and recommendations for healthcare professionals.
 
 ---
 
-## 📂 **Project Structure**
+## 📂 Project Structure
 
 ```
 Doctor_AI_helper/
-├── Backend/          # Contains all backend-related files
-├── public/           # Public assets for the frontend
-├── src/              # Source code for the frontend
-├── .gitignore        # Git ignore file
-├── package.json      # Frontend dependencies
-├── README.md         # Project documentation
-├── vite.config.js    # Vite configuration for React
+├── Backend/              # Contains all backend-related files
+├── public/               # Public assets for the frontend
+├── src/                  # Source code for the frontend
+├── .gitignore            # Git ignore file
+├── package.json          # Frontend dependencies
+├── README.md             # Project documentation
+├── vite.config.js        # Vite configuration for React
 ```
 
 ---
 
-## 🚀 **Setup Instructions**
+## 🚀 Setup Instructions
 
-### 🛠️ **Backend Setup**
+### 🛠️ Backend Setup
 
 1. Navigate to the `Backend` folder:
    ```bash
@@ -39,11 +38,11 @@ Doctor_AI_helper/
    python app.py
    ```
 
-   The backend will run on **[http://localhost:5000](http://localhost:5000)**.
+   The backend will run on [http://localhost:5000](http://localhost:5000).
 
 ---
 
-### 🎨 **Frontend Setup**
+### 🎨 Frontend Setup
 
 1. Navigate to the root directory of the project (where `package.json` is located).
 
@@ -57,49 +56,50 @@ Doctor_AI_helper/
    npm run dev
    ```
 
-   The frontend will run on **[http://localhost:5173](http://localhost:5173)** (or another port if specified).
+   The frontend will run on [http://localhost:5173](http://localhost:5173) (or another port if specified).
 
 ---
 
-## 🌐 **Running the Web Application**
+## 🌐 Running the Web Application
 
-1. **Start the Backend**:
-   - Navigate to the `Backend` folder and run:
-     ```bash
-     python app.py
-     ```
+### Start the Backend:
+```bash
+cd Backend
+python app.py
+```
 
-2. **Start the Frontend**:
-   - From the root directory, run:
-     ```bash
-     npm run dev
-     ```
+### Start the Frontend:
+```bash
+npm run dev
+```
 
-3. Open your browser and navigate to the frontend URL (e.g., **[http://localhost:5173](http://localhost:5173)**).
-
----
-
-## 🛠️ **Technologies Used**
-
-- **Backend**: [Flask](https://flask.palletsprojects.com/), Python
-- **AI Reasoing**: [CrewAI](https://www.crewai.com/)
-- **Frontend**: [React.js](https://reactjs.org/), [Vite](https://vitejs.dev/)
-- **Database**: [MongoDB](https://www.mongodb.com/) (configured in the backend)
-- **Other Tools**:
-  - [ReportLab](https://www.reportlab.com/) for PDF generation
-  - [TensorFlow](https://www.tensorflow.org/) for AI models
+### Open your browser and navigate to:
+[http://localhost:5173](http://localhost:5173)
 
 ---
 
-## 📝 **Notes**
+## 🛠️ Technologies Used
 
-- Ensure that **Python** and **Node.js** are installed on your system.
+- **Backend**: Flask, Python  
+- **AI Reasoning**: CrewAI  
+- **Frontend**: React.js, Vite  
+- **Database**: MongoDB (configured in the backend)
+
+### Other Tools:
+- ReportLab for PDF generation  
+- TensorFlow for AI models  
+
+---
+
+## 📝 Notes
+
+- Ensure that Python and Node.js are installed on your system.
 - The backend requires environment variables to be set in the `.env` file (e.g., database credentials, API keys).
-- The frontend and backend communicate via **REST APIs**.
+- The frontend and backend communicate via REST APIs.
 
 ---
 
-## 💡 **Features**
+## 💡 Features
 
 - **AI-Powered Diagnostics**: Analyze CBC reports and X-ray images with precision.
 - **Interactive Frontend**: User-friendly interface for uploading files and viewing results.
