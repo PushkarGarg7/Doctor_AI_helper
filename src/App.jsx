@@ -11,7 +11,7 @@ function App() {
     <BrowserRouter>
       <Routes>  
         <Route path='/' element = {<LandingPage/>}/>
-        <Route path='/rag' element = {<UploadHelper/>}/>
+        <Route path='/xray' element = {<UploadHelper/>}/>
         <Route path='/login' element = {<LogInForm/>}/>
         <Route path='/signup' element = {<SignUpForm/>}/>
         {/* <Route path='/upload' element = {<UploadHelper/>}/> */}

@@ -13,10 +13,12 @@ const diseases = [
 'Cardiomegaly', 'Emphysema', 'Effusion', 'Hernia', 'Infiltration', 'Mass', 'Nodule', 'Atelectasis', 
 'Pneumothorax', 'Pleural_Thickening', 'Pneumonia', 'Fibrosis', 'Edema', 'Consolidation'];
 
-const thresholds = [
-  0.519135, 0.540763, 0.478758, 0.465557, 0.529498, 0.474119, 0.481894, 0.509495, 
-  0.480846, 0.45797,0.61158, 0.420276, 0.496351, 0.560865];
-    
+  
+const thresholds = [ 0.450887, 0.471386, 0.488033, 0.494578, 0.545257, 0.506546, 0.478008, 0.484116,
+  0.511385, 0.509026, 0.546525, 0.515503, 0.557461, 0.549326
+];
+
+
 const UploadHelper = () => {
   const [xRayFile, setXrayFile] = useState("");
   const [CBCFile, setCBCFile] = useState("");
@@ -78,7 +80,7 @@ const UploadHelper = () => {
     };
     try {
 
-      const response = await axios.post('http://localhost:5000/cnn2', formData, {
+      const response = await axios.post('http://localhost:5000/cnn', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       console.log(response);

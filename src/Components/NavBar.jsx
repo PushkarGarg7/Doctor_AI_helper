@@ -34,7 +34,7 @@ function Navbar() {
             </div>
             <div className="custom-nav-right">
                 <ul className="custom-nav-links">
-                    <RoundedButton routeLink="/rag" label="X-Ray Analysis" style={{ backgroundColor: '#55b2ef', color: 'white' }} />
+                    <RoundedButton routeLink="/xray" label="X-Ray Analysis" style={{ backgroundColor: '#55b2ef', color: 'white' }} />
 
                     <RoundedButton routeLink="/login" label="LogIn" style={{ backgroundColor: '#55b2ef', color: 'white' }} />
                     <RoundedButton routeLink="/signUp" label="SignUp" style={{ backgroundColor: '#55b2ef', color: 'black' }} />
