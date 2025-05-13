@@ -5,6 +5,8 @@ from keras.applications.densenet import DenseNet121
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.models import Model
 from tensorflow.keras.utils import load_img, img_to_array
+from dotenv import load_dotenv
+import os 
 
 # ------------------------
 # CONSTANTS
@@ -23,8 +25,8 @@ THRESHOLDS = np.array([
     0.61158, 0.420276, 0.496351, 0.560865
 ])
 
-DENSENET_PATH = "C:\\Abhinav\\Abhinav\\PEC\\Major Project\\Project\\densenet.hdf5"
-WEIGHTS_PATH = "C:\\Abhinav\\Abhinav\\PEC\\Major Project\\Project\\pretrained_model.h5"
+DENSENET_PATH = os.getenv('DENSENET_PATH')
+WEIGHTS_PATH = os.getenv('WEIGHTS_PATH')
 
 # ------------------------
 # MODEL LOADING
